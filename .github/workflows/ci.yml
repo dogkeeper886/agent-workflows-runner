@@ -29,6 +29,7 @@ jobs:
   #   name: "Test: Auth"
   #   needs: build
   #   uses: ./.github/workflows/test-run.yml
+  #   secrets: inherit          # passes ANTHROPIC_API_KEY through for dual mode
   #   with:
   #     tag: auth
   #     judge_mode: ${{ inputs.judge_mode }}
@@ -39,6 +40,7 @@ jobs:
     name: "Test: All"
     needs: build
     uses: ./.github/workflows/test-run.yml
+    secrets: inherit            # passes ANTHROPIC_API_KEY through for dual mode
     with:
       judge_mode: ${{ inputs.judge_mode }}
       judge_model: ${{ inputs.judge_model }}

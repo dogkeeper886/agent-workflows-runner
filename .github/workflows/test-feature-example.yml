@@ -30,6 +30,7 @@ on:
 jobs:
   test:
     uses: ./.github/workflows/test-run.yml
+    secrets: inherit                    # passes ANTHROPIC_API_KEY through for dual mode
     with:
       tag: "example"                    # <-- Change this to your feature tag
       judge_mode: ${{ inputs.judge_mode }}

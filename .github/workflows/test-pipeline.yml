@@ -22,6 +22,7 @@ jobs:
   build:
     name: Build Tests
     uses: ./.github/workflows/test-suite.yml
+    secrets: inherit
     with:
       suite: build
       judge_mode: ${{ inputs.judge_mode }}
@@ -31,6 +32,7 @@ jobs:
     name: Integration Tests
     needs: build
     uses: ./.github/workflows/test-suite.yml
+    secrets: inherit
     with:
       suite: integration
       judge_mode: ${{ inputs.judge_mode }}
@@ -40,6 +42,7 @@ jobs:
     name: E2E Tests
     needs: integration
     uses: ./.github/workflows/test-suite.yml
+    secrets: inherit
     with:
       suite: e2e
       judge_mode: ${{ inputs.judge_mode }}
