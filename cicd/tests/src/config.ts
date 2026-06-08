@@ -25,10 +25,18 @@ export const CONFIG = {
   defaultTimeout: 60000,
   defaultStepTimeout: 30000,
   
-  // LLM Judge defaults
+  // LLM Judge — an opt-in second opinion. The default verdict is the simple
+  // (deterministic, model-free) judge; set LLM_JUDGE_MODE=dual to also run this.
   llm: {
-    defaultUrl: process.env.LLM_JUDGE_URL || 'http://localhost:11434',
-    defaultModel: process.env.LLM_JUDGE_MODEL || 'llama3:8b',
+    // 'simple' (default) = deterministic checks only. 'dual' = also run the LLM judge.
+    mode: process.env.LLM_JUDGE_MODE || 'simple',
+    // Optional base URL for any Anthropic-compatible endpoint (hosted or local).
+    // Unset → the Anthropic SDK's default endpoint.
+    baseUrl: process.env.LLM_JUDGE_URL || undefined,
+    // Real key for hosted Anthropic; a placeholder is fine for a local endpoint
+    // that ignores auth.
+    apiKey: process.env.ANTHROPIC_API_KEY || 'local',
+    model: process.env.LLM_JUDGE_MODEL || 'claude-haiku-4-5-20251001',
     timeout: 300000,
     stdoutLimit: 1000,
     stderrLimit: 500,

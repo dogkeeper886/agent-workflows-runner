@@ -223,12 +223,8 @@ export interface RunConfig {
   tag?: string;
   /** Show what would run without executing */
   dryRun: boolean;
-  /** Skip LLM judging (simple judge only) */
-  noLlm: boolean;
-  /** URL of the LLM judge Ollama instance */
-  judgeUrl: string;
-  /** Model to use for LLM judging */
-  judgeModel: string;
+  /** Also run the LLM judge (opt-in via LLM_JUDGE_MODE=dual); default is simple-only */
+  dualMode: boolean;
   /** Output directory for results */
   outputDir: string;
   /** Output format */
@@ -244,6 +240,6 @@ export interface RunConfig {
  */
 export const DEFAULT_CONFIG: Partial<RunConfig> = {
   dryRun: false,
-  noLlm: false,
+  dualMode: false,
   outputFormat: 'console',
 };
