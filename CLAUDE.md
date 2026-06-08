@@ -1,115 +1,106 @@
 # CLAUDE.md
 
-Guidance for Claude Code when working on the test-framework-template.
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
-## Project Overview
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-Reusable, YAML-driven CI test framework with dual-judge verification (Simple + LLM). Part of the ai-qa-workflow ecosystem (Phase 5: Automate).
+## 1. Think Before Coding
 
-## Installation
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-Agent-driven: run `/install` and follow the prompts.
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-Manual alternative:
-```bash
-make install TARGET=/path/to/project NAME=project-name
-cd /path/to/project/cicd/tests && npm install
-# Edit config.ts for your project
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
 ```
 
-## Core Commands
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-```bash
-cd cicd/tests
-npm run build                      # TypeScript compile
-npm test                           # Run all tests with LLM judge
-npm test -- --no-llm               # Run without LLM (faster)
-npm test -- --suite build          # Run specific suite
-npm test -- --id TC-001            # Run specific test
-npm test -- --tag auth             # Run tests tagged 'auth'
-npm test -- --dry-run              # Preview without executing
-npm run list                       # List available tests
-npm run list -- --tag auth         # List tests by tag
-```
+## 5. Dev-workflow discipline
 
-## Project Structure
+Substantial work flows through a pipeline; each step is a gate that stops for a
+human decision (commands suggest the next, they never auto-run it):
 
 ```
-cicd/tests/
-├── src/
-│   ├── cli.ts              # CLI entry point (Commander)
-│   ├── config.ts           # Project configuration — customize per project
-│   ├── types.ts            # Core interfaces (TestCase, TestStep, etc.)
-│   ├── loader.ts           # YAML parser with dependency resolution
-│   ├── executor.ts         # Test execution with variable capture
-│   ├── mcp-client.ts       # MCP tool client (optional)
-│   ├── log-collector.ts    # Docker log capture (optional)
-│   ├── judge/              # Simple + LLM judges
-│   └── reporter/           # Console + JSON reporters
-├── testcases/
-│   ├── build/              # TC-BUILD-*.yml
-│   ├── integration/        # TC-INT-*.yml
-│   └── e2e/                # TC-E2E-*.yml
-└── package.json
-
-.claude/
-├── skills/                 # /ci-testcase, /ci-run, /add-tool, /install, /review-docs-privacy
-└── rules/                  # test-yaml-format.md, workflow-patterns.md
+dw-story → dw-tasks → dw-review-tasks → dw-implement
+        → dw-review-implement → dw-create-pr → dw-merge
 ```
 
-## Test Case YAML
+Two review gates are external skills this repo does not own — invoke them by hand:
+- `code-review` (bundled): adversarial diff review. Run after `dw-implement`,
+  alongside `dw-review-implement`. Earns its cost on logic/risk; skip for pure docs.
+- `/review` (builtin): PR overview. Run after `dw-create-pr`, before `dw-merge`.
 
-See `.claude/rules/test-yaml-format.md` for full schema, variable capture syntax, and suite guidelines.
+Don't wire these into the `dw-*` commands — they may not exist in every install,
+and a command that references a missing skill is a dangling pointer.
 
-Key fields: `id`, `name`, `suite`, `steps`, `tags` (optional), `criteria`, `goal`, `dependencies`.
+**Right-size it.** A typo or a one-line doc change does not need the full chain —
+use judgment, branch + PR + merge is enough. The three review passes overlap:
+`dw-review-implement` is the always-on substance gate, `code-review` is for real
+logic or risk, `/review` is the PR summary. Running all three on a trivial diff is
+ritual, not rigor.
 
-## Dual-Judge System
+## 6. Artifact & doc review discipline
 
-Both judges must pass for a test to pass:
-- **Simple Judge**: Exit codes, expectPatterns, rejectPatterns, ERROR_PATTERNS
-- **LLM Judge**: Semantic analysis via Ollama against `criteria` and `goal`
+Match the reviewer to **who reads** the file you changed:
 
-Use `--no-llm` to skip LLM judging when Ollama is unavailable.
+- **Human-read docs** (README, `docs/` prose): run `reviewing-phrasing` (the words)
+  + `reviewing-typography` (the look) — the human-read doc review.
+- **Agent-read tooling** (commands, skills, CLAUDE.md, rules): run
+  `reviewing-artifacts` (does it do its job — one job, complete, goal-not-spec,
+  fits the studio, right for its reader).
 
-## Configuration
+These are skills this repo owns. Like the dev-workflow gates, they stop for a human
+and never auto-run — invoke them by hand.
 
-Edit `config.ts` per project:
-- `projectName` — used in LLM prompts
-- `SUITES` — extend with custom suite names (e.g., `runtime`, `inference`)
-- `ERROR_PATTERNS` / `ERROR_EXCLUSIONS` — project-specific error detection
-- `mcp.serverCommand` — MCP server startup command
+**Right-size it.** A typo or a one-line tweak does not need a review pass — use
+judgment. Reach for these when a change is substantial enough that the look, the
+wording, or the artifact's fitness actually matters.
 
-**Environment variables** (for CI, override without editing source):
-- `LLM_JUDGE_URL` — Ollama endpoint (default: `http://localhost:11434`)
-- `LLM_JUDGE_MODEL` — Model for judging (default: `llama3:8b`)
+---
 
-**Separate judge instance:** If testing an Ollama instance, run the judge on a different port to avoid GPU contention.
-
-## MCP Client (Optional)
-
-For MCP server projects, `mcp-client.ts` spawns the server and calls tools:
-```bash
-npx tsx cicd/tests/src/mcp-client.ts <tool_name> '<json_args>'
-```
-Configure via `MCP_SERVER_COMMAND` env var or `config.ts` → `mcp.serverCommand`.
-
-## CI Workflows
-
-See `.claude/rules/workflow-patterns.md` for per-feature and suite-based workflow patterns.
-
-Template includes: `build.yml`, `test-run.yml`, `test-feature-example.yml`, `ci.yml` (recommended) and legacy `test-pipeline.yml`, `test-suite.yml`.
-
-## Development Guidelines
-
-- Keep everything configurable via `config.ts` — never hardcode project-specific values
-- Template files are installed via agent-driven flow (`/install`) or Makefile fallback
-- Follow existing TypeScript patterns (strict types, async/await)
-- No hardcoded IPs, infrastructure IDs, or private repo references
-
-## Skills
-
-- `/ci-testcase` — generate YAML test cases from requirements
-- `/ci-run` — execute tests with guided output
-- `/add-tool` — add new MCP tools following standard patterns
-- `/install` — install framework into a project
-- `/review-docs-privacy` — review for security and quality
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -16,7 +16,7 @@ on:
       judge_mode:
         description: "Test judge mode"
         required: false
-        default: "dual"
+        default: "simple"
         type: choice
         options:
           - "simple"
@@ -24,7 +24,7 @@ on:
       judge_model:
         description: "LLM model for judging (if dual mode)"
         required: false
-        default: "llama3:8b"
+        default: "claude-haiku-4-5-20251001"
         type: string
   workflow_call:
     inputs:
@@ -35,12 +35,12 @@ on:
       judge_mode:
         description: "Test judge mode (simple, dual)"
         required: false
-        default: "dual"
+        default: "simple"
         type: string
       judge_model:
         description: "LLM model for judging"
         required: false
-        default: "llama3:8b"
+        default: "claude-haiku-4-5-20251001"
         type: string
     outputs:
       result:
@@ -68,16 +68,14 @@ jobs:
 
       - name: Run tests
         id: run-tests
+        env:
+          # Simple by default; dual opts in the LLM judge via the Anthropic SDK.
+          LLM_JUDGE_MODE: ${{ inputs.judge_mode }}
+          LLM_JUDGE_MODEL: ${{ vars.LLM_JUDGE_MODEL || inputs.judge_model }}
+          LLM_JUDGE_URL: ${{ vars.LLM_JUDGE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           cd cicd/tests
-
-          # Build judge flags based on input
-          JUDGE_FLAGS=""
-          if [ "${{ inputs.judge_mode }}" = "simple" ]; then
-            JUDGE_FLAGS="--no-llm"
-          else
-            JUDGE_FLAGS="--judge-model ${{ inputs.judge_model || 'llama3:8b' }}"
-          fi
 
           # Build suite flag
           SUITE_FLAG=""
@@ -86,11 +84,10 @@ jobs:
           fi
 
           echo "Suite: ${{ inputs.suite }}"
-          echo "Judge mode: ${{ inputs.judge_mode || 'dual' }}"
-          echo "Judge flags: $JUDGE_FLAGS"
+          echo "Judge mode: $LLM_JUDGE_MODE"
 
           # Run tests with JSON output
-          npx tsx src/cli.ts run $SUITE_FLAG $JUDGE_FLAGS --format json > /tmp/test-results.json || true
+          npx tsx src/cli.ts run $SUITE_FLAG --format json > /tmp/test-results.json || true
 
           echo "--- JSON Results ---"
           cat /tmp/test-results.json

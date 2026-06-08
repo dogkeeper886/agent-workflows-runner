@@ -1,6 +1,6 @@
 # Dual-Judge Test Framework Template
 
-A reusable, YAML-driven test framework with dual-judge verification (Simple + LLM) for CI/CD pipelines.
+A reusable, YAML-driven test framework for CI/CD pipelines. Fast and deterministic by default (the simple judge), with an opt-in LLM judge as a second opinion — reached through the Anthropic SDK, so any Anthropic-compatible endpoint (hosted or local) is just configuration.
 
 ## Project Goal
 
@@ -29,13 +29,13 @@ The framework is built around three core principles:
 |------------|---------|
 | **TypeScript** | Strict type safety and modern async/await patterns |
 | **YAML** | Declarative test case definitions |
-| **Ollama** | Local LLM integration for semantic judging |
+| **Anthropic SDK** | Reaches any Anthropic-compatible endpoint (hosted or local) for the opt-in semantic judge |
 | **Docker Compose** | Log collection with marker-based extraction |
 | **GitHub Actions** | CI/CD pipeline orchestration |
 
 ### Notable Features
 
-- **Dual-Judge System**: Both simple (fast) and LLM (semantic) judges must pass
+- **Dual-Judge System**: Fast deterministic judge by default; opt in the semantic LLM judge (`LLM_JUDGE_MODE=dual`) and both must pass
 - **YAML-Driven Tests**: Tests defined as configuration, not code
 - **Tag-Based Filtering**: Filter tests by feature tag via `--tag` for per-feature CI workflows
 - **Variable Capture**: Extract values from step output and pass to later steps via `{{variable}}`
@@ -150,7 +150,7 @@ Traditional tests only check exit codes. A process can exit with code 0 but prod
 
 The LLM judge reads the criteria from YAML and evaluates whether the actual output semantically satisfies the requirements—catching failures that pattern matching alone would miss.
 
-Use `--no-llm` to skip LLM judging for faster CI feedback when Ollama is unavailable.
+**The LLM judge is opt-in.** By default a run uses the simple judge only: fast, deterministic, and model-free. Set `LLM_JUDGE_MODE=dual` to also run the LLM judge — then both must pass (the verification above). A configured-but-unreachable endpoint degrades cleanly, falling back to the simple judge with a notice.
 
 ## Quick Start
 
@@ -196,10 +196,12 @@ export const SUITES: string[] = ['build', 'integration', 'e2e'];
 export const CONFIG = {
   projectName: 'your-project',
   
-  // LLM Judge settings (overridable via env vars)
+  // LLM Judge — opt-in second opinion (default verdict is the simple judge)
   llm: {
-    defaultUrl: process.env.LLM_JUDGE_URL || 'http://localhost:11434',
-    defaultModel: process.env.LLM_JUDGE_MODEL || 'llama3:8b',
+    mode: process.env.LLM_JUDGE_MODE || 'simple',          // 'simple' | 'dual'
+    baseUrl: process.env.LLM_JUDGE_URL || undefined,        // unset → hosted Anthropic API
+    apiKey: process.env.ANTHROPIC_API_KEY || 'local',
+    model: process.env.LLM_JUDGE_MODEL || 'claude-haiku-4-5-20251001',
     timeout: 300000,
     stdoutLimit: 1000,
     stderrLimit: 500,
@@ -217,22 +219,23 @@ export const ERROR_PATTERNS: RegExp[] = [
 
 ### Environment Variables
 
-For CI environments, override LLM judge settings without editing source:
+For CI environments, configure the judge without editing source:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `LLM_JUDGE_URL` | Ollama endpoint | `http://localhost:11434` |
-| `LLM_JUDGE_MODEL` | Model for judging | `llama3:8b` |
+| `LLM_JUDGE_MODE` | `simple` (deterministic only) or `dual` (opt in the LLM judge) | `simple` |
+| `LLM_JUDGE_MODEL` | Model for judging | `claude-haiku-4-5-20251001` |
+| `LLM_JUDGE_URL` | Base URL of an Anthropic-compatible endpoint (unset → hosted Anthropic API) | unset |
+| `ANTHROPIC_API_KEY` | API key for the hosted API (a placeholder works for a local endpoint that ignores auth) | `local` |
 
-**Tip:** If your project tests an Ollama instance (port 11434), run the LLM judge on a separate port (e.g., 11435) to avoid GPU memory contention.
+**Tip:** To judge against a local Anthropic-compatible model server, set `LLM_JUDGE_URL` to its address. Keeping the judge on a separate endpoint from any model your project itself tests avoids resource contention.
 
 ## Running Tests
 
 ```bash
 cd your-project/cicd/tests
 
-npm test                    # Run all tests with LLM judge
-npm test -- --no-llm        # Run without LLM (faster)
+npm test                    # Run all tests (simple judge — fast, no model)
 npm test -- --suite build   # Run specific suite
 npm test -- --id TC-001     # Run specific test
 npm test -- --tag auth      # Run tests tagged 'auth'
@@ -240,8 +243,9 @@ npm test -- --dry-run       # Preview what would run
 npm run list                # List available tests
 npm run list -- --tag auth  # List tests by tag
 
-# Override Ollama settings via CLI
-npm test -- --judge-url http://host:11434 --judge-model gemma3:12b
+# Opt in the LLM judge (env-configured, not a flag)
+LLM_JUDGE_MODE=dual npm test
+LLM_JUDGE_MODE=dual LLM_JUDGE_URL=http://host:11434 LLM_JUDGE_MODEL=gemma3:12b npm test
 ```
 
 ## CI Workflow Patterns
@@ -289,7 +293,7 @@ jobs:
 3. Change the `tag` value
 4. Add as a job in `ci.yml`
 
-Configure `LLM_JUDGE_URL` and `LLM_JUDGE_MODEL` as GitHub repository variables (`Settings > Variables > Actions`).
+Configure the judge with GitHub repository variables and secrets (`Settings > Variables/Secrets > Actions`): `LLM_JUDGE_MODE`, `LLM_JUDGE_MODEL`, `LLM_JUDGE_URL`, and the `ANTHROPIC_API_KEY` secret.
 
 ## MCP Testing
 
