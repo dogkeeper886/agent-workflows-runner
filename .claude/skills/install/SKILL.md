@@ -42,8 +42,9 @@ Examine the current working directory:
 Prompt the user with detected defaults:
 
 - **Project name** — from package.json or ask
-- **Ollama URL** — default: `http://localhost:11434`
-- **Ollama model** — default: `llama3:8b`
+- **Judge mode** — default: `simple` (deterministic, no model); `dual` opts in the LLM judge
+- **LLM judge model** — default: `claude-haiku-4-5-20251001` (used in dual mode)
+- **LLM judge endpoint** — optional Anthropic-compatible base URL (unset → hosted Anthropic API)
 - **Include MCP client?** — auto-yes if MCP SDK detected
 - **Include Docker log collector?** — auto-yes if docker-compose found
 - **Install Claude skills?** — recommend yes
@@ -72,8 +73,8 @@ Prompt the user with detected defaults:
 3. **Adapt config.ts** — replace placeholder values with user's answers:
    - `projectName: 'my-project'` -> actual project name
    - `sessionPrefix: 'test-session'` -> `'{name}-session'`
-   - `llm.defaultUrl` -> user's Ollama URL
-   - `llm.defaultModel` -> user's model
+   - `llm.model` -> user's judge model (default `claude-haiku-4-5-20251001`)
+   - `llm.baseUrl` -> user's endpoint, if any (else leave unset for the hosted Anthropic API)
 
 4. **Create `.gitignore`** in `cicd/results/`:
    ```
@@ -97,7 +98,7 @@ Show the user:
 - Next steps:
   - Write test cases: `cicd/tests/testcases/<suite>/*.yml`
   - Customize error patterns: `cicd/tests/src/config.ts`
-  - Run tests: `cd cicd/tests && npm test -- --no-llm`
+  - Run tests: `cd cicd/tests && npm test`
   - Generate test cases: `/ci-testcase`
 
 ---

@@ -1,12 +1,13 @@
 ---
 name: ci-run
-description: Execute test cases with dual-judge evaluation
+description: Execute test cases with the simple judge by default, or opt in the LLM judge
 user-invocable: true
 ---
 
 # Run Test Cases
 
-Execute test cases and evaluate results with the dual-judge system.
+Execute test cases and evaluate results. The simple (deterministic) judge is the
+default verdict; the LLM judge is an opt-in second opinion (`LLM_JUDGE_MODE=dual`).
 
 ```
 $ARGUMENTS
@@ -85,17 +86,19 @@ Instead of agent-based execution, use the built-in CLI:
 
 ```bash
 cd cicd/tests
-npm test                        # All tests with LLM judge
-npm test -- --no-llm            # Without LLM judge
+npm test                        # All tests (simple judge — fast, no model)
 npm test -- --suite integration # Specific suite
 npm test -- --id TC-INT-001     # Specific test
 npm test -- --tag auth          # Tests tagged 'auth'
 npm test -- --dry-run           # Preview only
+LLM_JUDGE_MODE=dual npm test    # Opt in the LLM judge (env, not a flag)
 ```
 
 **Environment variables for CI:**
-- `LLM_JUDGE_URL` — Ollama endpoint (default: `http://localhost:11434`)
-- `LLM_JUDGE_MODEL` — Model for judging (default: `llama3:8b`)
+- `LLM_JUDGE_MODE` — `simple` (default) or `dual` (opt in the LLM judge)
+- `LLM_JUDGE_MODEL` — Model for judging (default: `claude-haiku-4-5-20251001`)
+- `LLM_JUDGE_URL` — Base URL of an Anthropic-compatible endpoint (unset → hosted Anthropic API)
+- `ANTHROPIC_API_KEY` — API key for the hosted API
 
 ---
 
