@@ -15,14 +15,14 @@ on:
         required: false
         type: string
       judge_mode:
-        description: "Judge mode (simple = no LLM, dual = simple + LLM)"
+        description: "Judge mode (simple = deterministic only, dual = simple + LLM judge)"
         required: false
         default: "simple"
         type: string
       judge_model:
-        description: "LLM model for judging"
+        description: "LLM model for judging (dual mode)"
         required: false
-        default: "llama3:8b"
+        default: "claude-haiku-4-5-20251001"
         type: string
     outputs:
       result:
@@ -53,14 +53,16 @@ jobs:
 
       - name: Run tests
         id: run-tests
+        env:
+          # Simple by default; dual opts in the LLM judge. URL/model/key configure
+          # the Anthropic SDK — leave LLM_JUDGE_URL unset for the hosted Anthropic API,
+          # or set it (repo variable) to any Anthropic-compatible endpoint.
+          LLM_JUDGE_MODE: ${{ inputs.judge_mode }}
+          LLM_JUDGE_MODEL: ${{ vars.LLM_JUDGE_MODEL || inputs.judge_model }}
+          LLM_JUDGE_URL: ${{ vars.LLM_JUDGE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           cd cicd/tests
-
-          # Set LLM judge env vars from repo variables (fall back to defaults)
-          export LLM_JUDGE_URL="${{ vars.LLM_JUDGE_URL }}"
-          export LLM_JUDGE_MODEL="${{ vars.LLM_JUDGE_MODEL }}"
-          [ -z "$LLM_JUDGE_URL" ] && export LLM_JUDGE_URL="http://localhost:11434"
-          [ -z "$LLM_JUDGE_MODEL" ] && export LLM_JUDGE_MODEL="${{ inputs.judge_model }}"
 
           # Build filter flags
           FILTER_FLAGS=""
@@ -70,18 +72,10 @@ jobs:
             FILTER_FLAGS="--suite ${{ inputs.suite }}"
           fi
 
-          # Build judge flags
-          JUDGE_FLAGS=""
-          if [ "${{ inputs.judge_mode }}" = "simple" ]; then
-            JUDGE_FLAGS="--no-llm"
-          else
-            JUDGE_FLAGS="--judge-model ${{ inputs.judge_model }}"
-          fi
-
           echo "Filter: $FILTER_FLAGS"
-          echo "Judge: $JUDGE_FLAGS"
+          echo "Judge mode: $LLM_JUDGE_MODE"
 
-          npx tsx src/cli.ts run $FILTER_FLAGS $JUDGE_FLAGS --format json > /tmp/test-results.json || true
+          npx tsx src/cli.ts run $FILTER_FLAGS --format json > /tmp/test-results.json || true
 
           echo "--- Results ---"
           cat /tmp/test-results.json

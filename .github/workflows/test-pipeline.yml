@@ -7,7 +7,7 @@ on:
       judge_mode:
         description: "Test judge mode"
         required: false
-        default: "dual"
+        default: "simple"
         type: choice
         options:
           - "simple"
@@ -15,7 +15,7 @@ on:
       judge_model:
         description: "LLM model for judging (if dual mode)"
         required: false
-        default: "llama3:8b"
+        default: "claude-haiku-4-5-20251001"
         type: string
 
 jobs:

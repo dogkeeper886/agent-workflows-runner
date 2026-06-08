@@ -42,18 +42,22 @@ Both patterns use `test-run.yml` as the single reusable job.
 
 **Dual triggers:** Each workflow supports both `workflow_dispatch` (manual, with dropdowns) and `workflow_call` (callable from pipeline). This lets you run features independently or as part of the full CI.
 
-**Judge mode dropdown:** Each workflow offers `simple` (fast, no LLM) or `dual` (simple + LLM) judge modes via input.
+**Judge mode dropdown:** Each workflow offers `simple` (default — fast, deterministic, no model) or `dual` (simple + the opt-in LLM judge). The workflow sets `LLM_JUDGE_MODE` from this input; the runner is simple-only unless it reads `dual`.
 
 ## Environment Variables
 
-Configure LLM judge via GitHub repository variables (`Settings > Variables > Actions`):
+The LLM judge reaches its model through the Anthropic SDK, so any Anthropic-compatible
+endpoint (the hosted API or a local one) is a matter of configuration. Set these via
+GitHub repository variables/secrets (`Settings > Variables/Secrets > Actions`):
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `LLM_JUDGE_URL` | Ollama endpoint | `http://localhost:11434` |
-| `LLM_JUDGE_MODEL` | Model for judging | `llama3:8b` |
+| `LLM_JUDGE_MODE` | `simple` (default) or `dual` (opt in the LLM judge) | `dual` |
+| `LLM_JUDGE_MODEL` | Model for judging | `claude-haiku-4-5-20251001` |
+| `LLM_JUDGE_URL` | Base URL of an Anthropic-compatible endpoint (unset → hosted Anthropic API) | `http://localhost:11434` |
+| `ANTHROPIC_API_KEY` | API key for the hosted API (secret; a placeholder works for a local endpoint that ignores auth) | `sk-ant-...` |
 
-**Separate judge instance:** If your project tests an Ollama instance (e.g., on port 11434), run the LLM judge on a different port (e.g., 11435) to avoid GPU memory contention. Set `LLM_JUDGE_URL=http://localhost:11435` in your repo variables.
+**Local endpoint:** To judge against a local Anthropic-compatible model server, point `LLM_JUDGE_URL` at it. Keeping the judge on a separate endpoint from any model your project itself tests avoids resource contention.
 
 ## Legacy Workflows
 
