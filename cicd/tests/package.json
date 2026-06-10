@@ -11,7 +11,10 @@
     "test:integration": "tsx src/cli.ts run --suite integration",
     "test:e2e": "tsx src/cli.ts run --suite e2e",
     "list": "tsx src/cli.ts list",
-    "dev": "tsx src/cli.ts"
+    "dev": "tsx src/cli.ts",
+    "audit-bind": "tsx src/audit-bind.ts",
+    "drift": "tsx src/drift.ts",
+    "port-yaml": "tsx src/port-yaml.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
