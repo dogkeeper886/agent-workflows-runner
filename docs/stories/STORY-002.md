@@ -48,4 +48,4 @@ far the README reframe goes is left to the issue.
 
 - Created: 2026-06-11
 - Plan: #24
-- Issues: ✅ #25 (repo rename, closed), #26 (refs + README — PR #28 open), #27 (#78 handoff, pending)
+- Issues: ✅ #25 (repo rename, closed), ✅ #26 (refs + README — merged, PR #28), #27 (#78 handoff, pending)
