@@ -21,9 +21,9 @@ Install the test framework from the template source into the user's current work
 
 ### Step 1: Locate Template Source
 
-Input is the path to the test-framework-template repo:
+Input is the path to the agent-workflows-runner repo:
 - If provided: use it directly
-- If empty: check common locations (`~/src/test-framework-template`, `../test-framework-template`)
+- If empty: check common locations (`~/src/agent-workflows-runner`, `../agent-workflows-runner`)
 - If not found: ask the user for the path
 
 Read the template's `CLAUDE.md` to understand available components and the installation flow.

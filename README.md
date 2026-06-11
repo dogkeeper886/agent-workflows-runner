@@ -1,10 +1,12 @@
-# Dual-Judge Test Framework Template
+# agent-workflows-runner
 
-A reusable, YAML-driven test framework for CI/CD pipelines. Fast and deterministic by default (the simple judge), with an opt-in LLM judge as a second opinion — reached through the Anthropic SDK, so any Anthropic-compatible endpoint (hosted or local) is just configuration.
+The test runner in the `agent-*` family — `agent-workflows` (the workflows), **`agent-workflows-runner`** (this repo, the runner they drive), and `agent-studio` (the flagship).
+
+A reusable, YAML-driven dual-judge test framework for CI/CD pipelines. Fast and deterministic by default (the simple judge), with an opt-in LLM judge as a second opinion — reached through the Anthropic SDK, so any Anthropic-compatible endpoint (hosted or local) is just configuration.
 
 ## Project Goal
 
-This test framework design template was extracted from production MCP server projects to provide a **reusable testing foundation** that can be adopted by any project.
+This test framework is the runner half of the `agent-*` family: the executable that `agent-workflows` drives. Extracted from production MCP server projects, it provides a **reusable testing foundation** any project can adopt.
 
 ### Why This Framework?
 
@@ -158,12 +160,12 @@ The LLM judge reads the criteria from YAML and evaluates whether the actual outp
 
 In your project directory, tell Claude Code:
 
-> Install the test framework from /path/to/test-framework-template
+> Install the test framework from /path/to/agent-workflows-runner
 
 Or use the slash command:
 
 ```
-/install /path/to/test-framework-template
+/install /path/to/agent-workflows-runner
 ```
 
 The agent will detect your project type (MCP server, Docker, etc.), ask configuration questions, and install only what you need with values pre-configured.
@@ -171,7 +173,7 @@ The agent will detect your project type (MCP server, Docker, etc.), ask configur
 ### Alternative: Manual Install
 
 ```bash
-cd /path/to/test-framework-template
+cd /path/to/agent-workflows-runner
 make install TARGET=/path/to/your/project NAME=your-project
 cd /path/to/your/project/cicd/tests
 npm install
