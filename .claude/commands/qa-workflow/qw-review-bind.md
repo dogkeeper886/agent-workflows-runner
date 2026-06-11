@@ -14,8 +14,8 @@ deterministic audit and adds a human/agent pass for meaning.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-cases → qw-bind → qw-review-bind → qw-run → qw-merge
-    (qw-run = `make up` + the cicd runner — a phase, not a slash command)
+    qw-plan → qw-cases → qw-bind → qw-review-bind → qw-run → dw-merge
+    (qw-run = `npm test` — the cicd runner; a phase, not a slash command)
 
 ---
 
@@ -24,7 +24,7 @@ Fits in the qa-workflow:
     /qw-review-bind
         │
         ├─► Step 1: Run the deterministic audit
-        │     npm --prefix step-store run audit-bind
+        │     npm --prefix cicd/tests run audit-bind
         │   For each case it checks:
         │     - the `Script:` path resolves to a file, and
         │     - the doc's step count matches the YAML's step count.
