@@ -6,7 +6,7 @@ A reusable, YAML-driven dual-judge test framework for CI/CD pipelines. Fast and 
 
 ## Project Goal
 
-This test framework is the runner half of the `agent-*` family: the executable that `agent-workflows` drives. Extracted from production MCP server projects, it provides a **reusable testing foundation** any project can adopt.
+This test framework is the runner half of the `agent-*` family. Extracted from production MCP server projects, it provides a **reusable testing foundation** any project can adopt.
 
 ### Why This Framework?
 
