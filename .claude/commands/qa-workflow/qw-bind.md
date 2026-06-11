@@ -15,8 +15,8 @@ link still holds.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-cases → qw-bind → qw-review-bind → qw-run → qw-merge
-    (qw-run = `make up` + the cicd runner — a phase, not a slash command)
+    qw-plan → qw-cases → qw-bind → qw-review-bind → qw-run → dw-merge
+    (qw-run = `npm test` — the cicd runner; a phase, not a slash command)
 
 ---
 
@@ -37,7 +37,7 @@ Fits in the qa-workflow:
     /qw-bind cicd/tests/testcases/build/TC-BUILD-001.yml
         │
         ├─► Generate a scaffold from the YAML:
-        │     npm --prefix step-store run port-yaml -- <yaml> > docs/tests/TS-NN-<slug>.md
+        │     npm --prefix cicd/tests run port-yaml -- <yaml> > docs/tests/TS-NN-<slug>.md
         │   The scaffold carries the steps and the `Script:` binding; objective,
         │   expected results, story link, and namespace are TODOs.
         ├─► Fill the TODOs: `namespace`, `story` (+ `story_hash`), each TC's
@@ -49,6 +49,6 @@ Fits in the qa-workflow:
 ## API Notes
 
 - `port-yaml` is a scaffolder, not a translator — a human/agent fills meaning.
-- `story_hash` = `sha256sum docs/stories/STORY-XXX.md` (the drift anchor, #27).
+- `story_hash` = `sha256sum docs/stories/STORY-XXX.md` (the drift anchor).
 - Producer paired with `/qw-review-bind` (the audit).
 ```

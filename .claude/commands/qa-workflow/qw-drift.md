@@ -14,7 +14,7 @@ this looks, deterministically, every run.
 
 Fits in the qa-workflow:
 
-    … → qw-run → [human] → dw-merge   (qw-run = `make up` + the cicd runner, not a slash command)
+    … → qw-run → [human] → dw-merge   (qw-run = `npm test` — the cicd runner, not a slash command)
                     └──────────────► qw-drift ──► back to qw-cases when stale
 
 ---
@@ -23,7 +23,7 @@ Fits in the qa-workflow:
 
     /qw-drift
         │
-        ├─► Run the gate:  npm --prefix step-store run drift
+        ├─► Run the gate:  npm --prefix cicd/tests run drift
         │   Two deterministic signals, per case/scenario:
         │     - STALE   — the linked story's sha256 no longer matches the doc's
         │                 `story_hash` (the story moved since the test was synced).
@@ -41,7 +41,7 @@ Fits in the qa-workflow:
 
 ## API Notes
 
-- Hash-first is deterministic and needs no stack; it runs in CI (`.github/workflows/qa-drift.yml`).
+- Hash-first is deterministic and needs no stack; it runs in CI and on demand.
 - A semantic, embedding-based signal (softer "drifted in meaning", via the store)
   is a planned advisory add — hash is the build-failing gate.
 - `status` in a test doc (green | stale | unbound) reflects this gate's verdict.
