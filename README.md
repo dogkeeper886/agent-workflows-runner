@@ -1,345 +1,138 @@
 # agent-workflows-runner
 
-The test runner in the `agent-*` family — `agent-workflows` (the workflows), **`agent-workflows-runner`** (this repo, the runner they drive), and `agent-studio` (the flagship).
+**The runner half of [`agent-workflows`](https://github.com/dogkeeper886/agent-workflows)** — a YAML-driven, dual-judge test framework: **a worked example you port into your own repo**, not a package you install unchanged.
 
-A reusable, YAML-driven dual-judge test framework for CI/CD pipelines. Fast and deterministic by default (the simple judge), with an opt-in LLM judge as a second opinion — reached through the Anthropic SDK, so any Anthropic-compatible endpoint (hosted or local) is just configuration.
+`agent-workflows` authors the commands and test docs; this repo runs the tests they describe. Fast and deterministic by default (the simple judge), with an opt-in LLM judge as a second opinion — reached through the Anthropic SDK, so any Anthropic-compatible endpoint (hosted or local) is just configuration.
 
-## Project Goal
+![The agent family: agent-workflows authors commands and test docs; this runner executes them; agent-studio wraps both into a product](docs/diagrams/png/01-agent-family.png)
 
-This test framework is the runner half of the `agent-*` family. Extracted from production MCP server projects, it provides a **reusable testing foundation** any project can adopt.
+## Contents
 
-### Why This Framework?
+- [Why this framework](#why-this-framework)
+- [How the dual judge works](#how-the-dual-judge-works)
+- [Quick start — port it in](#quick-start--port-it-in)
+- [Configuration](#configuration)
+- [Running tests](#running-tests)
+- [Writing test cases](#writing-test-cases)
+- [CI workflow patterns](#ci-workflow-patterns)
+- [MCP testing](#mcp-testing)
+- [Skills and commands](#skills-and-commands)
+- [Directory structure](#directory-structure)
+- [The agent family](#the-agent-family)
+- [License](#license)
 
-Traditional testing often relies solely on exit codes, which can miss subtle failures where a process completes "successfully" but produces incorrect results. This framework addresses that gap by combining:
+## Why this framework
 
-- **Deterministic Verification**: Fast, reliable checks for exit codes, expected patterns, and error detection
-- **Semantic Analysis**: LLM-powered evaluation that understands whether test output actually meets human-readable criteria
+Testing on exit codes alone misses the failures that matter: a process exits `0` but produces the wrong output. This runner pairs a fast deterministic judge with an opt-in semantic one, so a test passes only when the result is *actually* right.
 
-### Design Philosophy
+Because the semantic judge reaches its model through the standard Anthropic SDK, the framework is more than a static-script checker for one product:
 
-The framework is built around three core principles:
+| Use case | What it covers | Status |
+|----------|----------------|--------|
+| **Static / deterministic testing** | exit codes, expected patterns, error detection — the simple judge | **shipping** |
+| **AI-produced content testing & audit** | the LLM judge grades generated output against human-readable criteria, not just pass/fail commands | **shipping** |
+| **Agent-driven testing via MCP** | the judge attaches MCP tools so an agent pulls in external resources to gather what a test needs | **roadmap** — where this is heading, not yet built |
 
-1. **Reusability**: Install into any project with a single command. The YAML-driven approach means tests are configuration, not code—making them accessible to developers and non-developers alike.
+> The MCP-agent direction is not implemented. Today, `mcp-client.ts` lets a test call *your* MCP server's tools (see [MCP testing](#mcp-testing)) — that is "test your MCP server," not "the judge uses MCP."
 
-2. **Comprehensive Logging**: Every test execution produces detailed, timestamped logs with test markers for precise extraction. This enables effective debugging, auditing, and tracking of test history.
+## How the dual judge works
 
-3. **Proper Test Design**: Tests are organized by suite (build, integration, e2e), support dependencies between test cases, and provide clear pass/fail criteria that both humans and LLMs can evaluate.
+![Dual-judge verdict: the simple judge always runs; the LLM judge runs only in dual mode, and then both must pass](docs/diagrams/png/02-dual-judge.png)
 
-### Key Technologies
+The **simple judge** always runs — deterministic, model-free, milliseconds. The **LLM judge** runs only when you opt in with `LLM_JUDGE_MODE=dual`, and then **both must pass**. A configured-but-unreachable endpoint degrades cleanly, falling back to the simple judge with a notice.
 
-| Technology | Purpose |
-|------------|---------|
-| **TypeScript** | Strict type safety and modern async/await patterns |
-| **YAML** | Declarative test case definitions |
-| **Anthropic SDK** | Reaches any Anthropic-compatible endpoint (hosted or local) for the opt-in semantic judge |
-| **Docker Compose** | Log collection with marker-based extraction |
-| **GitHub Actions** | CI/CD pipeline orchestration |
-
-### Notable Features
-
-- **Dual-Judge System**: Fast deterministic judge by default; opt in the semantic LLM judge (`LLM_JUDGE_MODE=dual`) and both must pass
-- **YAML-Driven Tests**: Tests defined as configuration, not code
-- **Tag-Based Filtering**: Filter tests by feature tag via `--tag` for per-feature CI workflows
-- **Variable Capture**: Extract values from step output and pass to later steps via `{{variable}}`
-- **Environment Variable Substitution**: Variables fall back to `process.env` for CI-friendly patterns
-- **Dependency Resolution**: Tests can depend on other tests passing first
-- **Log Collection with Markers**: Precise extraction of logs per test from Docker streams
-- **MCP Client**: Test MCP server tools with configurable server command
-- **Claude Skills**: AI-assisted test authoring via `/ci-testcase`, `/ci-run`, `/add-tool`
-- **Per-Feature CI Workflows**: Composable GitHub Actions with reusable test runner
-- **Installable Template**: Add to any project via `/install` or `make install`
-- **Flexible Output**: Console (colored) and JSON formats for CI consumption
-
-## Architecture
-
-### Workflow Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              TEST EXECUTION FLOW                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-     ┌──────────────┐
-     │  YAML Files  │   testcases/build/*.yml
-     │  (Test Defs) │   testcases/integration/*.yml
-     └──────┬───────┘   testcases/e2e/*.yml
-            │
-            ▼
-  ┌─────────────────────┐
-  │     TestLoader      │  • Parse YAML test definitions
-  │     (loader.ts)     │  • Validate required fields
-  └─────────┬───────────┘  • Resolve dependencies
-            │              • Filter by suite or tag
-            ▼
-  ┌─────────────────────┐
-  │   Dependency Sort   │  • Topological sort by dependencies
-  │                     │  • Secondary sort by priority
-  └─────────┬───────────┘  • Auto-include cross-suite deps
-            │
-            ▼
-  ┌─────────────────────┐     ┌──────────────────┐
-  │    TestExecutor     │────▶│   LogCollector   │
-  │   (executor.ts)     │     │ (log-collector)  │
-  └─────────┬───────────┘     └────────┬─────────┘
-            │                          │
-            │  • Run shell commands    │  • docker compose logs
-            │  • Capture stdout/stderr │  • Test markers
-            │  • Check patterns        │  • Per-test extraction
-            │  • Substitute variables  │
-            │    (captured + env vars) │
-            ▼                          ▼
-     ┌─────────────────────────────────────┐
-     │            TestResult[]             │
-     │  (exit codes, logs, timing, etc.)   │
-     └─────────────────┬───────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                           DUAL-JUDGE VERIFICATION                            │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│    ┌─────────────────────────┐         ┌─────────────────────────┐          │
-│    │      Simple Judge       │         │       LLM Judge         │          │
-│    │    (simple-judge.ts)    │         │    (llm-judge.ts)       │          │
-│    ├─────────────────────────┤         ├─────────────────────────┤          │
-│    │ Exit code == 0          │         │ Semantic analysis       │          │
-│    │ Expected patterns       │         │ Criteria evaluation     │          │
-│    │ No rejected patterns    │         │ Context understanding   │          │
-│    │ No error patterns       │         │ Evidence extraction     │          │
-│    ├─────────────────────────┤         ├─────────────────────────┤          │
-│    │ Speed: Milliseconds     │         │ Speed: Seconds          │          │
-│    │ Mode: Deterministic     │         │ Mode: AI-powered        │          │
-│    └───────────┬─────────────┘         └───────────┬─────────────┘          │
-│                │                                   │                         │
-│                │         ┌───────────┐             │                         │
-│                └────────▶│  BOTH     │◀────────────┘                         │
-│                          │  MUST     │                                       │
-│                          │  PASS     │                                       │
-│                          └─────┬─────┘                                       │
-│                                │                                             │
-└────────────────────────────────┼─────────────────────────────────────────────┘
-                                 │
-                                 ▼
-                    ┌────────────────────────┐
-                    │       Reporters        │
-                    ├────────────────────────┤
-                    │ ConsoleReporter        │  Colored terminal output
-                    │ JsonReporter           │  Structured JSON files
-                    └────────────┬───────────┘
-                                 │
-                                 ▼
-                    ┌────────────────────────┐
-                    │    Final Results       │
-                    ├────────────────────────┤
-                    │ results/               │
-                    │ ├── summary.json       │
-                    │ ├── TC-*.json          │
-                    │ └── TC-*.log           │
-                    └────────────────────────┘
-```
-
-### Why Dual-Judge?
-
-Traditional tests only check exit codes. A process can exit with code 0 but produce incorrect results:
-
-| Scenario | Exit Code | Simple Judge | LLM Judge |
+| Scenario | Exit code | Simple judge | LLM judge |
 |----------|-----------|--------------|-----------|
-| Command fails | 1 | Catches | Catches |
-| "Error" in output | 0 | Catches | Catches |
-| Wrong output format | 0 | Misses | Catches |
-| Incomplete results | 0 | Misses | Catches |
-| Semantic mismatch | 0 | Misses | Catches |
+| Command fails | 1 | catches | catches |
+| "Error" in output | 0 | catches | catches |
+| Wrong output format | 0 | misses | catches |
+| Incomplete results | 0 | misses | catches |
+| Semantic mismatch | 0 | misses | catches |
 
-The LLM judge reads the criteria from YAML and evaluates whether the actual output semantically satisfies the requirements—catching failures that pattern matching alone would miss.
+## Quick start — port it in
 
-**The LLM judge is opt-in.** By default a run uses the simple judge only: fast, deterministic, and model-free. Set `LLM_JUDGE_MODE=dual` to also run the LLM judge — then both must pass (the verification above). A configured-but-unreachable endpoint degrades cleanly, falling back to the simple judge with a notice.
+This repo is a worked example. The `make install` target copies the runner — source, example test cases, scripts, CI workflows, and Claude tooling — into your repo and stamps in your project name. You then adapt it; every project's tests differ.
 
-## Quick Start
-
-### Recommended: Agent-Driven Install
-
-In your project directory, tell Claude Code:
-
-> Install the test framework from /path/to/agent-workflows-runner
-
-Or use the slash command:
-
-```
-/install /path/to/agent-workflows-runner
-```
-
-The agent will detect your project type (MCP server, Docker, etc.), ask configuration questions, and install only what you need with values pre-configured.
-
-### Alternative: Manual Install
+![Porting the runner: make install copies the runner into your repo and stamps in your name; then you adapt config and write your own test cases](docs/diagrams/png/04-make-install.png)
 
 ```bash
 cd /path/to/agent-workflows-runner
 make install TARGET=/path/to/your/project NAME=your-project
+
 cd /path/to/your/project/cicd/tests
 npm install
-# Then edit config.ts manually
+npm test                 # run all tests with the simple judge
 ```
 
-Additional Makefile commands:
+Then edit `cicd/tests/src/config.ts` for your project (see [Configuration](#configuration)) and write your own cases (see [Writing test cases](#writing-test-cases)).
+
+Other Makefile targets:
 
 ```bash
-make help                                    # Show usage
-make clean TARGET=/path/to/project           # Remove framework from project
+make help                              # show usage
+make clean TARGET=/path/to/project     # remove the framework from a project
+make diagrams                          # re-render docs/diagrams/*.svg → png/
 ```
+
+**Agent-driven alternative.** In your project, tell Claude Code `/install /path/to/agent-workflows-runner` (or "Install the test framework from …"). The agent detects your project type, asks a few configuration questions, and installs only what you need with values pre-filled.
 
 ## Configuration
 
 Edit `cicd/tests/src/config.ts` in your project:
 
 ```typescript
-// Extend with custom suite names for your project
 export const SUITES: string[] = ['build', 'integration', 'e2e'];
 
 export const CONFIG = {
   projectName: 'your-project',
-  
-  // LLM Judge — opt-in second opinion (default verdict is the simple judge)
+
+  // LLM judge — opt-in second opinion (default verdict is the simple judge)
   llm: {
-    mode: process.env.LLM_JUDGE_MODE || 'simple',          // 'simple' | 'dual'
-    baseUrl: process.env.LLM_JUDGE_URL || undefined,        // unset → hosted Anthropic API
+    mode: process.env.LLM_JUDGE_MODE || 'simple',     // 'simple' | 'dual'
+    baseUrl: process.env.LLM_JUDGE_URL || undefined,   // unset → hosted Anthropic API
     apiKey: process.env.ANTHROPIC_API_KEY || 'local',
     model: process.env.LLM_JUDGE_MODEL || 'claude-haiku-4-5-20251001',
     timeout: 300000,
-    stdoutLimit: 1000,
-    stderrLimit: 500,
-    logsLimit: 3000,
   },
 };
 
 // Project-specific error patterns
-export const ERROR_PATTERNS: RegExp[] = [
-  /\berror\b/i,
-  /\bfailed\b/i,
-  // Add your patterns...
-];
+export const ERROR_PATTERNS: RegExp[] = [/\berror\b/i, /\bfailed\b/i];
 ```
 
-### Environment Variables
-
-For CI environments, configure the judge without editing source:
+For CI, configure the judge through the environment instead of editing source:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `LLM_JUDGE_MODE` | `simple` (deterministic only) or `dual` (opt in the LLM judge) | `simple` |
-| `LLM_JUDGE_MODEL` | Model for judging | `claude-haiku-4-5-20251001` |
-| `LLM_JUDGE_URL` | Base URL of an Anthropic-compatible endpoint (unset → hosted Anthropic API) | unset |
+| `LLM_JUDGE_MODEL` | model for judging | `claude-haiku-4-5-20251001` |
+| `LLM_JUDGE_URL` | base URL of an Anthropic-compatible endpoint (unset → hosted Anthropic API) | unset |
 | `ANTHROPIC_API_KEY` | API key for the hosted API (a placeholder works for a local endpoint that ignores auth) | `local` |
 
-**Tip:** To judge against a local Anthropic-compatible model server, set `LLM_JUDGE_URL` to its address. Keeping the judge on a separate endpoint from any model your project itself tests avoids resource contention.
+> **Tip:** point `LLM_JUDGE_URL` at a local Anthropic-compatible server to judge offline. Keeping the judge on a separate endpoint from any model your project itself tests avoids resource contention.
 
-## Running Tests
+## Running tests
 
 ```bash
 cd your-project/cicd/tests
 
-npm test                    # Run all tests (simple judge — fast, no model)
-npm test -- --suite build   # Run specific suite
-npm test -- --id TC-001     # Run specific test
-npm test -- --tag auth      # Run tests tagged 'auth'
-npm test -- --dry-run       # Preview what would run
-npm run list                # List available tests
-npm run list -- --tag auth  # List tests by tag
+npm test                    # all tests (simple judge — fast, no model)
+npm test -- --suite build   # one suite
+npm test -- --id TC-001     # one test
+npm test -- --tag auth      # tests tagged 'auth'
+npm test -- --dry-run       # preview what would run
+npm run list                # list available tests
 
-# Opt in the LLM judge (env-configured, not a flag)
+# opt in the LLM judge (env-configured, not a flag)
 LLM_JUDGE_MODE=dual npm test
 LLM_JUDGE_MODE=dual LLM_JUDGE_URL=http://host:11434 LLM_JUDGE_MODEL=gemma3:12b npm test
 ```
 
-## CI Workflow Patterns
+## Writing test cases
 
-The template includes composable GitHub Actions workflows:
+A test case is YAML — configuration, not code. Drop files into `cicd/tests/testcases/<suite>/`.
 
-```
-.github/workflows/
-├── build.yml                # Standalone build step
-├── test-run.yml             # Reusable test runner (supports --tag and --suite)
-├── test-feature-example.yml # Example per-feature workflow (~25 lines)
-├── ci.yml                   # Full pipeline: build -> tests in parallel
-├── test-pipeline.yml        # Legacy suite-based pipeline
-└── test-suite.yml           # Legacy reusable suite runner
-```
-
-### Per-Feature Pattern (Recommended)
-
-Each feature gets a thin workflow file that delegates to `test-run.yml`:
-
-```yaml
-# .github/workflows/test-auth.yml
-name: "Test: Auth"
-on:
-  workflow_dispatch:
-    inputs:
-      judge_mode:
-        type: choice
-        options: ["simple", "dual"]
-  workflow_call:
-    inputs:
-      judge_mode:
-        type: string
-jobs:
-  test:
-    uses: ./.github/workflows/test-run.yml
-    with:
-      tag: auth
-      judge_mode: ${{ inputs.judge_mode }}
-```
-
-**Adding a new feature test:**
-1. Tag your test cases: `tags: [my-feature]`
-2. Copy `test-feature-example.yml` to `test-my-feature.yml`
-3. Change the `tag` value
-4. Add as a job in `ci.yml`
-
-Configure the judge with GitHub repository variables and secrets (`Settings > Variables/Secrets > Actions`): `LLM_JUDGE_MODE`, `LLM_JUDGE_MODEL`, `LLM_JUDGE_URL`, and the `ANTHROPIC_API_KEY` secret.
-
-## MCP Testing
-
-For MCP server projects, `mcp-client.ts` spawns your server and calls tools:
-
-```bash
-# Configure your server command
-export MCP_SERVER_COMMAND="node dist/mcpServer.js"
-
-# Test a tool directly
-npx tsx cicd/tests/src/mcp-client.ts get_venues '{}'
-
-# Use in YAML test cases
-```
-
-```yaml
-steps:
-  - name: Query venues
-    command: npx tsx cicd/tests/src/mcp-client.ts get_venues '{}'
-    expectPatterns:
-      - "totalCount"
-    rejectPatterns:
-      - "isError"
-```
-
-Requires `@modelcontextprotocol/sdk` (install in your project: `npm install @modelcontextprotocol/sdk`).
-
-## Claude Skills
-
-AI-assisted workflows via Claude Code slash commands:
-
-| Skill | Purpose |
-|-------|---------|
-| `/ci-testcase` | Generate YAML test cases from requirements |
-| `/ci-run` | Execute tests with guided output |
-| `/add-tool` | Add new MCP tools following standard patterns |
-| `/install` | Install framework into a project |
-| `/review-docs-privacy` | Review for security and documentation quality |
-
-These are installed to `.claude/skills/` by the install flow.
-
-## Writing Test Cases
-
-Create YAML files in `cicd/tests/testcases/<suite>/`:
+![Anatomy of a YAML test case: identity fields, ordered steps with expect/reject patterns, and human-readable criteria for the LLM judge](docs/diagrams/png/03-testcase-anatomy.png)
 
 ```yaml
 id: TC-BUILD-001
@@ -354,7 +147,7 @@ steps:
   - name: Install dependencies
     command: npm install
     timeout: 60000
-    
+
   - name: Run build
     command: npm run build
     expectPatterns:
@@ -366,85 +159,142 @@ criteria: |
   Verify the project builds without errors.
 ```
 
+`expectPatterns` must appear in the step output; `rejectPatterns` must not; `criteria` is the human-readable pass condition the LLM judge evaluates the run against.
+
 ### Tags
 
-Tags enable per-feature filtering and CI workflow splitting:
+Tags drive per-feature filtering and CI splitting (`--tag`, `tag:` in workflows):
 
 ```yaml
-tags: [auth, api]          # Feature tags
-tags: [build, compile]     # Suite-aligned tags
-tags: [smoke]              # Test category tags
+tags: [auth, api]          # feature tags
+tags: [build, compile]     # suite-aligned tags
+tags: [smoke]              # category tags
 ```
 
-### Variable Capture
+### Variable capture
 
-Steps can capture values from JSON output and pass them to later steps using `{{variable}}` substitution. Variables resolve from captured step output first, then fall back to `process.env`:
+A step can capture a value from JSON output and pass it to a later step via `{{variable}}`. Variables resolve from captured output first, then fall back to `process.env` — a CI-friendly pattern.
 
 ```yaml
-id: TC-INT-002
-name: Create and verify resource
-suite: integration
-goal: Verify resource creation and retrieval
-timeout: 30000
-dependencies: []
-tags: [api, resources]
-
 steps:
   - name: Create resource
     command: curl -s -X POST http://localhost:3000/api/resources -d '{"name":"test"}'
-    expectPatterns:
-      - "id"
+    expectPatterns: ["id"]
     capture:
       resourceId: "id"
 
   - name: Verify resource exists
     command: curl -s http://localhost:3000/api/resources/{{resourceId}}
-    expectPatterns:
-      - "test"
-
-criteria: |
-  Resource is created and can be retrieved by ID.
+    expectPatterns: ["test"]
 ```
 
-**Capture paths** support dot-notation and array find syntax:
+Capture paths support dot-notation and array-find syntax:
 
 | Path | Resolves to |
-|------|------------|
+|------|-------------|
 | `id` | `response.id` |
 | `data.name` | `response.data.name` |
-| `items[0].id` | First element's `id` |
-| `data[name=foo].id` | First element in `data` where `name === "foo"` |
-| `$[type=user].email` | Root array find where `type === "user"` |
+| `items[0].id` | first element's `id` |
+| `data[name=foo].id` | first element in `data` where `name === "foo"` |
+| `$[type=user].email` | root-array find where `type === "user"` |
 
-MCP tool responses (double-encoded JSON in `content[0].text`) are automatically unwrapped before capture.
+MCP tool responses (double-encoded JSON in `content[0].text`) are unwrapped automatically before capture.
 
-## Directory Structure
+## CI workflow patterns
+
+The framework ships composable GitHub Actions. The recommended pattern: each feature gets a thin workflow that delegates to the reusable `test-run.yml`.
+
+```
+.github/workflows/
+├── build.yml                # standalone build step
+├── test-run.yml             # reusable test runner (supports --tag and --suite)
+├── test-feature-example.yml # example per-feature workflow (~25 lines)
+└── ci.yml                   # full pipeline: build → tests in parallel
+```
+
+```yaml
+# .github/workflows/test-auth.yml
+name: "Test: Auth"
+on:
+  workflow_dispatch:
+    inputs:
+      judge_mode: { type: choice, options: ["simple", "dual"] }
+  workflow_call:
+    inputs:
+      judge_mode: { type: string }
+jobs:
+  test:
+    uses: ./.github/workflows/test-run.yml
+    with:
+      tag: auth
+      judge_mode: ${{ inputs.judge_mode }}
+```
+
+**To add a feature test:** tag your cases (`tags: [my-feature]`), copy `test-feature-example.yml` to `test-my-feature.yml`, change the `tag`, and add it as a job in `ci.yml`. Configure the judge with repository Variables/Secrets (`LLM_JUDGE_MODE`, `LLM_JUDGE_MODEL`, `LLM_JUDGE_URL`, and the `ANTHROPIC_API_KEY` secret).
+
+## MCP testing
+
+For MCP server projects, `mcp-client.ts` spawns your server and calls a tool, so you can assert on the result in a test step:
+
+```bash
+export MCP_SERVER_COMMAND="node dist/mcpServer.js"
+npx tsx cicd/tests/src/mcp-client.ts get_venues '{}'
+```
+
+```yaml
+steps:
+  - name: Query venues
+    command: npx tsx cicd/tests/src/mcp-client.ts get_venues '{}'
+    expectPatterns: ["totalCount"]
+    rejectPatterns: ["isError"]
+```
+
+Requires `@modelcontextprotocol/sdk` in your project (`npm install @modelcontextprotocol/sdk`).
+
+## Skills and commands
+
+The `.claude/` tooling splits in two — what gets **shipped into your project**, and what stays here as **maintainer tooling** for working on this repo.
+
+**Shipped into your project by `/install`** — AI-assisted test authoring:
+
+| Skill | Purpose |
+|-------|---------|
+| `/install` | install the framework into a project (the entry point; ships the three below) |
+| `/ci-testcase` | generate YAML test cases from requirements |
+| `/ci-run` | execute tests with guided output |
+| `/add-tool` | add new MCP tools following standard patterns |
+
+**Maintainer tooling in this repo** — the dev-workflow this repo is built with (see `CLAUDE.md` §5–6):
+
+| Artifact | Role |
+|----------|------|
+| `dev-workflow/dw-*` commands | story → plan → tasks → implement → PR → merge pipeline |
+| `qa-workflow/qw-*` commands | test-doc planning, authoring, binding, drift |
+| `reviewing-phrasing` / `reviewing-typography` | human-read doc review — the words / the look |
+| `reviewing-artifacts` | agent-read artifact review (commands, skills, docs) |
+| `review-docs-privacy` | security + documentation-quality review |
+
+## Directory structure
+
+What `make install` lays down in your project:
 
 ```
 your-project/
 ├── CLAUDE.md                    # AI agent guidance
 ├── .claude/
-│   ├── skills/                  # AI-assisted workflows
-│   │   ├── ci-testcase/         # /ci-testcase — generate test cases
-│   │   ├── ci-run/              # /ci-run — execute tests
-│   │   └── add-tool/            # /add-tool — add MCP tools
-│   └── rules/                   # Context-aware rules
-│       ├── test-yaml-format.md  # YAML schema reference
-│       └── workflow-patterns.md # CI workflow design patterns
+│   ├── skills/                  # /ci-testcase, /ci-run, /add-tool
+│   └── rules/                   # YAML schema + CI workflow patterns
 ├── cicd/
 │   ├── tests/
 │   │   ├── src/
-│   │   │   ├── config.ts        # ← Configure here
-│   │   │   ├── cli.ts
-│   │   │   ├── types.ts
-│   │   │   ├── loader.ts
-│   │   │   ├── executor.ts
+│   │   │   ├── config.ts        # ← configure here
+│   │   │   ├── cli.ts  loader.ts  executor.ts  types.ts
 │   │   │   ├── mcp-client.ts    # MCP tool client (optional)
 │   │   │   ├── log-collector.ts
-│   │   │   ├── judge/
-│   │   │   └── reporter/
+│   │   │   ├── judge/           # simple-judge.ts + llm-judge.ts
+│   │   │   └── reporter/        # console + JSON
 │   │   ├── testcases/
-│   │   │   ├── build/           # ← Your tests
+│   │   │   ├── build/           # ← your tests
 │   │   │   ├── integration/
 │   │   │   └── e2e/
 │   │   ├── package.json
@@ -452,14 +302,18 @@ your-project/
 │   ├── scripts/
 │   │   └── format-results.sh
 │   └── results/
-└── .github/workflows/
-    ├── build.yml                # Standalone build
-    ├── test-run.yml             # Reusable test runner
-    ├── test-feature-example.yml # Per-feature template
-    ├── ci.yml                   # Full pipeline orchestrator
-    ├── test-pipeline.yml        # Legacy pipeline
-    └── test-suite.yml           # Legacy suite runner
+└── .github/workflows/           # build.yml, test-run.yml, ci.yml, …
 ```
+
+## The agent family
+
+This runner is one of three repos (see the diagram up top):
+
+| Repo | Role | Status |
+|------|------|--------|
+| [**agent-workflows**](https://github.com/dogkeeper886/agent-workflows) | dev-workflow + qa-workflow commands and the test docs they author | shipped |
+| **agent-workflows-runner** (this repo) | executes the test scripts the qa-workflow docs map to — a dual-judge framework (fast checks + opt-in LLM judge) | shipped |
+| **agent-studio** | local-first web GUI over the workflows + runner; closes the Dev → QA → PM loop | working name (currently `ai-qa-studio`), planning |
 
 ## License
 
