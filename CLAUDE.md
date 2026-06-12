@@ -92,7 +92,7 @@ Match the reviewer to **who reads** the file you changed:
   + `reviewing-typography` (the look) — the human-read doc review.
 - **Agent-read tooling** (commands, skills, CLAUDE.md, rules): run
   `reviewing-artifacts` (does it do its job — one job, complete, goal-not-spec,
-  fits the studio, right for its reader).
+  fits the project, right for its reader).
 
 These are skills this repo owns. Like the dev-workflow gates, they stop for a human
 and never auto-run — invoke them by hand.

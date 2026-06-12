@@ -11,7 +11,7 @@ Issue number: {{input}}
 Quality-gates the work done by `/dw-implement` before it becomes a PR. Checks that
 the changes on the branch **deliver the issue** (every "Done When" is actually
 satisfied) and stay **surgical** (every changed line traces to the issue — no scope
-creep, dead code, or debug leftovers) while **fitting the studio**. Fixes small
+creep, dead code, or debug leftovers) while **fitting the project**. Fixes small
 findings on the branch in place, or hands back to `/dw-implement` if the approach is
 wrong.
 
@@ -49,7 +49,7 @@ Fits between `/dw-implement` (does the work) and `/dw-create-pr` (opens the PR):
         │   - [ ] No dead code, commented-out blocks, debug prints, or leftover TODOs
         │   - [ ] Now-unused imports/vars/files the change created are removed
         │
-        ├─► Step 4: Fits the studio
+        ├─► Step 4: Fits the project
         │   - [ ] Matches the project's conventions and existing patterns/style
         │   - [ ] Core stays target-agnostic — no vendor names/coupling leaked in
         │         (vendor specifics belong in a profile)
@@ -88,7 +88,7 @@ Fits between `/dw-implement` (does the work) and `/dw-create-pr` (opens the PR):
     ✓ only design/ added + two pointer lines in code/README.md
     ✓ no dead code / debug leftovers; no unrelated edits
 
-    Fits the studio:
+    Fits the project:
     ✓ core stays target-agnostic; markdown source of truth intact
 
 **Output:**
