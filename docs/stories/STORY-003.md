@@ -80,4 +80,4 @@ than a guess.
 
 - Created: 2026-06-12
 - Plan: #29
-- Issues: #30, #31, #32
+- Issues: #30, #31, #32 — PR #33 open
