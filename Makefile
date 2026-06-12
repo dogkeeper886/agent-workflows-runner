@@ -10,7 +10,7 @@
 #   npm test -- --no-llm
 
 SHELL := /bin/bash
-.PHONY: install help clean check
+.PHONY: install help clean check diagrams
 
 # Default values
 NAME ?= my-project
@@ -124,6 +124,9 @@ install: check
 	@echo "  npm test -- --no-llm  # Without LLM judge"
 	@echo "  npm run list          # List available tests"
 	@echo ""
+
+diagrams:
+	@docs/diagrams/render.sh
 
 clean:
 ifndef TARGET

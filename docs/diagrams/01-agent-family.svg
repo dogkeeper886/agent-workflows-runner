@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 260" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="880" height="260" fill="#ffffff"/>
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <text x="30" y="34" font-size="17" font-weight="700" fill="#0f172a">The agent family</text>
+
+  <rect x="30" y="78" width="232" height="104" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="146" y="110" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">agent-workflows</text>
+  <text x="146" y="134" text-anchor="middle" font-size="12.5" fill="#475569">authors the commands</text>
+  <text x="146" y="151" text-anchor="middle" font-size="12.5" fill="#475569">+ test docs</text>
+
+  <line x1="262" y1="130" x2="320" y2="130" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+  <text x="291" y="120" text-anchor="middle" font-size="10.5" fill="#64748b">test → script</text>
+
+  <rect x="324" y="78" width="232" height="104" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="440" y="108" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e3a8a">agent-workflows-runner</text>
+  <text x="440" y="126" text-anchor="middle" font-size="12" fill="#2563eb">(this repo)</text>
+  <text x="440" y="149" text-anchor="middle" font-size="12.5" fill="#0f172a">executes the test scripts</text>
+  <text x="440" y="167" text-anchor="middle" font-size="12" fill="#0f172a">dual-judge: fast + LLM</text>
+
+  <line x1="556" y1="130" x2="614" y2="130" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+  <text x="585" y="120" text-anchor="middle" font-size="10.5" fill="#64748b">+ runner</text>
+
+  <rect x="618" y="78" width="232" height="104" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="734" y="110" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">agent-studio</text>
+  <text x="734" y="134" text-anchor="middle" font-size="12.5" fill="#475569">local-first web GUI —</text>
+  <text x="734" y="151" text-anchor="middle" font-size="12.5" fill="#475569">closes the Dev → QA → PM loop</text>
+  <text x="734" y="171" text-anchor="middle" font-size="11" fill="#94a3b8">working name · ai-qa-studio · planning</text>
+
+  <text x="30" y="220" font-size="12.5" fill="#475569">agent-workflows authors the workflows and test docs; this runner executes them; the studio wraps both into a product.</text>
+</svg>
