@@ -79,5 +79,6 @@ than a guess.
 ## Status
 
 - Created: 2026-06-12
+- Completed: 2026-06-12
 - Plan: #29
-- Issues: #30, #31, #32 — PR #33 open
+- Issues: ✅ #30, ✅ #31, ✅ #32 — all merged (PR #33)
