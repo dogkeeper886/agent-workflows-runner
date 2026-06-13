@@ -72,4 +72,5 @@ endpoint. The gap is purely auth: there's no keyless option for the subscription
 - Issues: #35
 - Plan: #36
 - Tasks: #37, #38, #39, #40
+- PRs: #41 (#37 — open)
 - Tests: none
