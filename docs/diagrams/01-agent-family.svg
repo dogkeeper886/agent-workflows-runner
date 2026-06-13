@@ -19,7 +19,7 @@
   <text x="440" y="108" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e3a8a">agent-workflows-runner</text>
   <text x="440" y="126" text-anchor="middle" font-size="12" fill="#2563eb">(this repo)</text>
   <text x="440" y="149" text-anchor="middle" font-size="12.5" fill="#0f172a">executes the test scripts</text>
-  <text x="440" y="167" text-anchor="middle" font-size="12" fill="#0f172a">dual-judge: fast + LLM</text>
+  <text x="440" y="167" text-anchor="middle" font-size="12" fill="#0f172a">dual-judge: fast + agent</text>
 
   <line x1="556" y1="130" x2="614" y2="130" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
   <text x="585" y="120" text-anchor="middle" font-size="10.5" fill="#64748b">+ runner</text>
