@@ -12,11 +12,6 @@ on:
         options:
           - "simple"
           - "dual"
-      judge_model:
-        description: "LLM model for judging (if dual mode)"
-        required: false
-        default: "claude-haiku-4-5-20251001"
-        type: string
 
 jobs:
   build:
@@ -26,7 +21,6 @@ jobs:
     with:
       suite: build
       judge_mode: ${{ inputs.judge_mode }}
-      judge_model: ${{ inputs.judge_model }}
 
   integration:
     name: Integration Tests
@@ -36,7 +30,6 @@ jobs:
     with:
       suite: integration
       judge_mode: ${{ inputs.judge_mode }}
-      judge_model: ${{ inputs.judge_model }}
 
   e2e:
     name: E2E Tests
@@ -46,4 +39,3 @@ jobs:
     with:
       suite: e2e
       judge_mode: ${{ inputs.judge_mode }}
-      judge_model: ${{ inputs.judge_model }}

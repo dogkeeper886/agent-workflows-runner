@@ -11,11 +11,6 @@ on:
         options:
           - "simple"
           - "dual"
-      judge_model:
-        description: "LLM model for judging (if dual mode)"
-        required: false
-        default: "claude-haiku-4-5-20251001"
-        type: string
 
 jobs:
   build:
@@ -29,18 +24,16 @@ jobs:
   #   name: "Test: Auth"
   #   needs: build
   #   uses: ./.github/workflows/test-run.yml
-  #   secrets: inherit          # passes ANTHROPIC_API_KEY through for dual mode
+  #   secrets: inherit          # passes CLAUDE_CODE_OAUTH_TOKEN through for dual mode
   #   with:
   #     tag: auth
   #     judge_mode: ${{ inputs.judge_mode }}
-  #     judge_model: ${{ inputs.judge_model }}
 
   # Default: run all tests (no tag filter)
   test-all:
     name: "Test: All"
     needs: build
     uses: ./.github/workflows/test-run.yml
-    secrets: inherit            # passes ANTHROPIC_API_KEY through for dual mode
+    secrets: inherit            # passes CLAUDE_CODE_OAUTH_TOKEN through for dual mode
     with:
       judge_mode: ${{ inputs.judge_mode }}
-      judge_model: ${{ inputs.judge_model }}
