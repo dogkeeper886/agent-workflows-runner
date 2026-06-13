@@ -21,11 +21,6 @@ on:
         options:
           - "simple"
           - "dual"
-      judge_model:
-        description: "LLM model for judging (if dual mode)"
-        required: false
-        default: "claude-haiku-4-5-20251001"
-        type: string
   workflow_call:
     inputs:
       suite:
@@ -36,11 +31,6 @@ on:
         description: "Test judge mode (simple, dual)"
         required: false
         default: "simple"
-        type: string
-      judge_model:
-        description: "LLM model for judging"
-        required: false
-        default: "claude-haiku-4-5-20251001"
         type: string
     outputs:
       result:
@@ -69,11 +59,13 @@ jobs:
       - name: Run tests
         id: run-tests
         env:
-          # Simple by default; dual opts in the LLM judge via the Anthropic SDK.
-          LLM_JUDGE_MODE: ${{ inputs.judge_mode }}
-          LLM_JUDGE_MODEL: ${{ vars.LLM_JUDGE_MODEL || inputs.judge_model }}
-          LLM_JUDGE_URL: ${{ vars.LLM_JUDGE_URL }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Simple by default; dual opts in the agent judge, which runs keyless on a
+          # Claude Code subscription via CLAUDE_CODE_OAUTH_TOKEN — no Console API key.
+          # JUDGE_AGENT (repo variable) swaps the ACP agent/model; empty uses the
+          # bundled Claude ACP agent.
+          JUDGE_MODE: ${{ inputs.judge_mode }}
+          JUDGE_AGENT: ${{ vars.JUDGE_AGENT }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           cd cicd/tests
 
@@ -84,7 +76,7 @@ jobs:
           fi
 
           echo "Suite: ${{ inputs.suite }}"
-          echo "Judge mode: $LLM_JUDGE_MODE"
+          echo "Judge mode: $JUDGE_MODE"
 
           # Run tests with JSON output
           npx tsx src/cli.ts run $SUITE_FLAG --format json > /tmp/test-results.json || true

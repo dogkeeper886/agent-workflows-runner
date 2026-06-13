@@ -15,14 +15,9 @@ on:
         required: false
         type: string
       judge_mode:
-        description: "Judge mode (simple = deterministic only, dual = simple + LLM judge)"
+        description: "Judge mode (simple = deterministic only, dual = simple + agent judge)"
         required: false
         default: "simple"
-        type: string
-      judge_model:
-        description: "LLM model for judging (dual mode)"
-        required: false
-        default: "claude-haiku-4-5-20251001"
         type: string
     outputs:
       result:
@@ -54,13 +49,13 @@ jobs:
       - name: Run tests
         id: run-tests
         env:
-          # Simple by default; dual opts in the LLM judge. URL/model/key configure
-          # the Anthropic SDK — leave LLM_JUDGE_URL unset for the hosted Anthropic API,
-          # or set it (repo variable) to any Anthropic-compatible endpoint.
-          LLM_JUDGE_MODE: ${{ inputs.judge_mode }}
-          LLM_JUDGE_MODEL: ${{ vars.LLM_JUDGE_MODEL || inputs.judge_model }}
-          LLM_JUDGE_URL: ${{ vars.LLM_JUDGE_URL }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Simple by default; dual opts in the agent judge, which runs keyless on a
+          # Claude Code subscription via CLAUDE_CODE_OAUTH_TOKEN — no Console API key.
+          # JUDGE_AGENT (repo variable) swaps the ACP agent/model; empty uses the
+          # bundled Claude ACP agent. Model + auth live in the agent, not here.
+          JUDGE_MODE: ${{ inputs.judge_mode }}
+          JUDGE_AGENT: ${{ vars.JUDGE_AGENT }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           cd cicd/tests
 
@@ -73,7 +68,7 @@ jobs:
           fi
 
           echo "Filter: $FILTER_FLAGS"
-          echo "Judge mode: $LLM_JUDGE_MODE"
+          echo "Judge mode: $JUDGE_MODE"
 
           npx tsx src/cli.ts run $FILTER_FLAGS --format json > /tmp/test-results.json || true
 
