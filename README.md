@@ -10,6 +10,7 @@
 
 - [Why this framework](#why-this-framework)
 - [How the dual judge works](#how-the-dual-judge-works)
+- [The ACP agent judge](#the-acp-agent-judge)
 - [Quick start — port it in](#quick-start--port-it-in)
 - [Configuration](#configuration)
 - [Running tests](#running-tests)
@@ -48,6 +49,19 @@ The **simple judge** always runs — deterministic, model-free, milliseconds. Th
 | Wrong output format | 0 | misses | catches |
 | Incomplete results | 0 | misses | catches |
 | Semantic mismatch | 0 | misses | catches |
+
+## The ACP agent judge
+
+The [Agent Client Protocol](https://agentclientprotocol.com) (ACP) is an open, vendor-neutral standard — created by [Zed Industries](https://zed.dev) — for driving coding agents over a JSON-RPC stdio link. The agent judge is an ACP **client**: it spawns a configured agent as a child process, runs one prompt turn per test (`initialize → session/new → session/prompt`), and reads back a JSON verdict — `{ pass, reason, evidence }`. It only evaluates — it refuses every tool-permission request the agent makes.
+
+![The agent judge as an ACP client: it spawns an ACP agent over stdio; the agent authenticates keyless and drives a model, returning a JSON verdict; JUDGE_AGENT swaps the agent](docs/diagrams/png/05-acp-agent-judge.png)
+
+Routing the verdict through ACP is what makes the headline claims true:
+
+- **Keyless.** Authentication is the agent's job, not the judge's. The bundled Claude agent runs on your Claude Code subscription (`~/.claude` locally, `CLAUDE_CODE_OAUTH_TOKEN` in CI) — no Console API key.
+- **Swap = config.** The model lives inside the agent. Point `JUDGE_AGENT` at any other ACP agent to change model or vendor without touching runner code.
+
+If the agent can't be reached or isn't authenticated, the judge detects it up front and falls back to the simple judge with a notice.
 
 ## Quick start — port it in
 
@@ -91,6 +105,7 @@ export const CONFIG = {
     mode: process.env.JUDGE_MODE || 'simple',   // 'simple' | 'dual'
     agent: process.env.JUDGE_AGENT || '',        // '' → bundled Claude ACP agent (keyless); set to another ACP agent's command to swap model/vendor
     timeout: 300000,
+    // …plus stdout/stderr/log truncation limits — see config.ts
   },
 };
 
