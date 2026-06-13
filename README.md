@@ -59,7 +59,8 @@ The [Agent Client Protocol](https://agentclientprotocol.com) (ACP) is an open, v
 Routing the verdict through ACP is what makes the headline claims true:
 
 - **Keyless.** Authentication is the agent's job, not the judge's. The bundled Claude agent runs on your Claude Code subscription (`~/.claude` locally, `CLAUDE_CODE_OAUTH_TOKEN` in CI) — no Console API key.
-- **Swap = config.** The model lives inside the agent. Point `JUDGE_AGENT` at any other ACP agent to change model or vendor without touching runner code.
+- **Any ACP agent.** Because ACP is a standard, the judge isn't tied to one vendor. Agents already exist for Gemini CLI, Codex CLI, GitHub Copilot, Goose, [and many more](https://agentclientprotocol.com/get-started/agents). This framework ships only the bundled Claude agent — but `JUDGE_AGENT` points the judge at any other, so changing model or vendor is config, not code.
+- **MCP-ready.** An ACP session can hand the agent a set of MCP servers. The judge opens its session with none and acts on no tools — it evaluates, it doesn't gather — but that same capability is the foundation for the roadmap's [agent-driven testing via MCP](#why-this-framework).
 
 If the agent can't be reached or isn't authenticated, the judge detects it up front and falls back to the simple judge with a notice.
 
