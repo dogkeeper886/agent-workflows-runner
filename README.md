@@ -2,7 +2,7 @@
 
 **The runner half of [`agent-workflows`](https://github.com/dogkeeper886/agent-workflows)** — a YAML-driven, dual-judge test framework: **a worked example you port into your own repo**, not a package you install unchanged.
 
-`agent-workflows` authors the commands and test docs; this repo runs the tests they describe. Fast and deterministic by default (the simple judge), with an opt-in LLM judge as a second opinion — reached through the Anthropic SDK, so any Anthropic-compatible endpoint (hosted or local) is just configuration.
+`agent-workflows` authors the commands and test docs; this repo runs the tests they describe. Fast and deterministic by default (the simple judge), with an opt-in agent judge as a second opinion — an Agent Client Protocol client that runs **keyless on a Claude Code subscription**, so no Console API key is needed and swapping the model or vendor is just configuration.
 
 ![The agent family: agent-workflows authors commands and test docs; this runner executes them; agent-studio wraps both into a product](docs/diagrams/png/01-agent-family.png)
 
@@ -25,23 +25,23 @@
 
 Testing on exit codes alone misses the failures that matter: a process exits `0` but produces the wrong output. This runner pairs a fast deterministic judge with an opt-in semantic one, so a test passes only when the result is *actually* right.
 
-Because the semantic judge reaches its model through the standard Anthropic SDK, the framework is more than a static-script checker for one product:
+Because the semantic judge brings a reasoning model to the verdict, the framework is more than a static-script checker for one product:
 
 | Use case | What it covers | Status |
 |----------|----------------|--------|
 | **Static / deterministic testing** | exit codes, expected patterns, error detection — the simple judge | **shipping** |
-| **AI-produced content testing & audit** | the LLM judge grades generated output against human-readable criteria, not just pass/fail commands | **shipping** |
+| **AI-produced content testing & audit** | the agent judge grades generated output against human-readable criteria, not just pass/fail commands | **shipping** |
 | **Agent-driven testing via MCP** | the judge attaches MCP tools so an agent pulls in external resources to gather what a test needs | **roadmap** — where this is heading, not yet built |
 
 > The MCP-agent direction is not implemented. Today, `mcp-client.ts` lets a test call *your* MCP server's tools (see [MCP testing](#mcp-testing)) — that is "test your MCP server," not "the judge uses MCP."
 
 ## How the dual judge works
 
-![Dual-judge verdict: the simple judge always runs; the LLM judge runs only in dual mode, and then both must pass](docs/diagrams/png/02-dual-judge.png)
+![Dual-judge verdict: the simple judge always runs; the agent judge runs only in dual mode, and then both must pass](docs/diagrams/png/02-dual-judge.png)
 
-The **simple judge** always runs — deterministic, model-free, milliseconds. The **LLM judge** runs only when you opt in with `LLM_JUDGE_MODE=dual`, and then **both must pass**. A configured-but-unreachable endpoint degrades cleanly, falling back to the simple judge with a notice.
+The **simple judge** always runs — deterministic, model-free, milliseconds. The **agent judge** runs only when you opt in with `JUDGE_MODE=dual`, and then **both must pass**. An unreachable or unauthenticated agent degrades cleanly, falling back to the simple judge with a notice.
 
-| Scenario | Exit code | Simple judge | LLM judge |
+| Scenario | Exit code | Simple judge | Agent judge |
 |----------|-----------|--------------|-----------|
 | Command fails | 1 | catches | catches |
 | "Error" in output | 0 | catches | catches |
@@ -86,12 +86,10 @@ export const SUITES: string[] = ['build', 'integration', 'e2e'];
 export const CONFIG = {
   projectName: 'your-project',
 
-  // LLM judge — opt-in second opinion (default verdict is the simple judge)
-  llm: {
-    mode: process.env.LLM_JUDGE_MODE || 'simple',     // 'simple' | 'dual'
-    baseUrl: process.env.LLM_JUDGE_URL || undefined,   // unset → hosted Anthropic API
-    apiKey: process.env.ANTHROPIC_API_KEY || 'local',
-    model: process.env.LLM_JUDGE_MODEL || 'claude-haiku-4-5-20251001',
+  // Agent judge — opt-in second opinion (default verdict is the simple judge)
+  judge: {
+    mode: process.env.JUDGE_MODE || 'simple',   // 'simple' | 'dual'
+    agent: process.env.JUDGE_AGENT || '',        // '' → bundled Claude ACP agent (keyless); set to another ACP agent's command to swap model/vendor
     timeout: 300000,
   },
 };
@@ -104,12 +102,11 @@ For CI, configure the judge through the environment instead of editing source:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `LLM_JUDGE_MODE` | `simple` (deterministic only) or `dual` (opt in the LLM judge) | `simple` |
-| `LLM_JUDGE_MODEL` | model for judging | `claude-haiku-4-5-20251001` |
-| `LLM_JUDGE_URL` | base URL of an Anthropic-compatible endpoint (unset → hosted Anthropic API) | unset |
-| `ANTHROPIC_API_KEY` | API key for the hosted API (a placeholder works for a local endpoint that ignores auth) | `local` |
+| `JUDGE_MODE` | `simple` (deterministic only) or `dual` (opt in the agent judge) | `simple` |
+| `JUDGE_AGENT` | command that launches the ACP agent the judge drives; unset uses the bundled Claude ACP agent, keyless on a Claude Code subscription. Set it to another ACP agent to swap model/vendor — config, not code | unset |
+| `CLAUDE_CODE_OAUTH_TOKEN` | authenticates the bundled Claude agent on a GitHub-hosted CI runner; not needed on a self-hosted runner that's logged into Claude Code (`~/.claude`) | unset |
 
-> **Tip:** point `LLM_JUDGE_URL` at a local Anthropic-compatible server to judge offline. Keeping the judge on a separate endpoint from any model your project itself tests avoids resource contention.
+> **Keyless by design.** The agent judge authenticates through the agent — your Claude Code login — not a Console API key, and the model lives in the agent, so swapping it (`JUDGE_AGENT`) is config, not code.
 
 ## Running tests
 
@@ -123,16 +120,16 @@ npm test -- --tag auth      # tests tagged 'auth'
 npm test -- --dry-run       # preview what would run
 npm run list                # list available tests
 
-# opt in the LLM judge (env-configured, not a flag)
-LLM_JUDGE_MODE=dual npm test
-LLM_JUDGE_MODE=dual LLM_JUDGE_URL=http://host:11434 LLM_JUDGE_MODEL=gemma3:12b npm test
+# opt in the agent judge (env-configured, not a flag)
+JUDGE_MODE=dual npm test                              # keyless via your Claude Code login (~/.claude)
+JUDGE_AGENT="my-acp-agent" JUDGE_MODE=dual npm test   # drive a different ACP agent (model/vendor)
 ```
 
 ## Writing test cases
 
 A test case is YAML — configuration, not code. Drop files into `cicd/tests/testcases/<suite>/`.
 
-![Anatomy of a YAML test case: identity fields, ordered steps with expect/reject patterns, and human-readable criteria for the LLM judge](docs/diagrams/png/03-testcase-anatomy.png)
+![Anatomy of a YAML test case: identity fields, ordered steps with expect/reject patterns, and human-readable criteria for the agent judge](docs/diagrams/png/03-testcase-anatomy.png)
 
 ```yaml
 id: TC-BUILD-001
@@ -159,7 +156,7 @@ criteria: |
   Verify the project builds without errors.
 ```
 
-`expectPatterns` must appear in the step output; `rejectPatterns` must not; `criteria` is the human-readable pass condition the LLM judge evaluates the run against.
+`expectPatterns` must appear in the step output; `rejectPatterns` must not; `criteria` is the human-readable pass condition the agent judge evaluates the run against.
 
 ### Tags
 
@@ -230,7 +227,7 @@ jobs:
       judge_mode: ${{ inputs.judge_mode }}
 ```
 
-**To add a feature test:** tag your cases (`tags: [my-feature]`), copy `test-feature-example.yml` to `test-my-feature.yml`, change the `tag`, and add it as a job in `ci.yml`. Configure the judge with repository Variables/Secrets (`LLM_JUDGE_MODE`, `LLM_JUDGE_MODEL`, `LLM_JUDGE_URL`, and the `ANTHROPIC_API_KEY` secret).
+**To add a feature test:** tag your cases (`tags: [my-feature]`), copy `test-feature-example.yml` to `test-my-feature.yml`, change the `tag`, and add it as a job in `ci.yml`. Configure the judge through repository Variables (`JUDGE_MODE`, and `JUDGE_AGENT` to swap agents); on a GitHub-hosted runner, add the `CLAUDE_CODE_OAUTH_TOKEN` secret so the agent authenticates keyless — a self-hosted runner logged into Claude Code needs no secret.
 
 ## MCP testing
 
@@ -291,7 +288,7 @@ your-project/
 │   │   │   ├── cli.ts  loader.ts  executor.ts  types.ts
 │   │   │   ├── mcp-client.ts    # MCP tool client (optional)
 │   │   │   ├── log-collector.ts
-│   │   │   ├── judge/           # simple-judge.ts + llm-judge.ts
+│   │   │   ├── judge/           # simple-judge.ts + agent-judge.ts
 │   │   │   └── reporter/        # console + JSON
 │   │   ├── testcases/
 │   │   │   ├── build/           # ← your tests
@@ -312,7 +309,7 @@ This runner is one of three repos (see the diagram up top):
 | Repo | Role | Status |
 |------|------|--------|
 | [**agent-workflows**](https://github.com/dogkeeper886/agent-workflows) | dev-workflow + qa-workflow commands and the test docs they author | shipped |
-| **agent-workflows-runner** (this repo) | executes the test scripts the qa-workflow docs map to — a dual-judge framework (fast checks + opt-in LLM judge) | shipped |
+| **agent-workflows-runner** (this repo) | executes the test scripts the qa-workflow docs map to — a dual-judge framework (fast checks + opt-in agent judge) | shipped |
 | **agent-studio** | local-first web GUI over the workflows + runner; closes the Dev → QA → PM loop | working name (currently `ai-qa-studio`), planning |
 
 ## License

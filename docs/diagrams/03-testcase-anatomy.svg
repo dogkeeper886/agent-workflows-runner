@@ -35,5 +35,5 @@
   <!-- criteria -->
   <text x="50" y="358" font-size="13" font-weight="700" fill="#92400e">criteria</text>
   <rect x="50" y="370" width="720" height="22" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
-  <text x="68" y="386" font-size="12" fill="#0f172a">human-readable pass conditions — what the LLM judge evaluates the run against</text>
+  <text x="68" y="386" font-size="12" fill="#0f172a">human-readable pass conditions — what the agent judge evaluates the run against</text>
 </svg>
