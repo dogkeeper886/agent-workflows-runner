@@ -44,9 +44,9 @@ export interface TestCase {
   tags?: string[];
   /** Test steps to execute */
   steps: TestStep[];
-  /** Human-readable criteria for LLM judge evaluation */
+  /** Human-readable criteria for agent judge evaluation */
   criteria: string;
-  /** Short goal statement for LLM judge context (optional) */
+  /** Short goal statement for agent judge context (optional) */
   goal?: string;
 }
 
@@ -165,8 +165,8 @@ export interface TestReport {
   logFile: string;
   /** Simple judge verdict */
   simpleJudge: Judgment;
-  /** LLM judge verdict */
-  llmJudge: Judgment;
+  /** Agent judge verdict */
+  agentJudge: Judgment;
 }
 
 /**
@@ -192,8 +192,8 @@ export interface TestSummary {
     passed: number;
     failed: number;
   };
-  /** LLM judge breakdown */
-  llm: {
+  /** Agent judge breakdown */
+  agent: {
     passed: number;
     failed: number;
   };
@@ -223,7 +223,7 @@ export interface RunConfig {
   tag?: string;
   /** Show what would run without executing */
   dryRun: boolean;
-  /** Also run the LLM judge (opt-in via LLM_JUDGE_MODE=dual); default is simple-only */
+  /** Also run the agent judge (opt-in via JUDGE_MODE=dual); default is simple-only */
   dualMode: boolean;
   /** Output directory for results */
   outputDir: string;
