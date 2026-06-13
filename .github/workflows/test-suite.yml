@@ -40,7 +40,7 @@ on:
 jobs:
   test:
     name: Run ${{ inputs.suite }} Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       result: ${{ steps.run-tests.outcome }}
 
@@ -59,13 +59,12 @@ jobs:
       - name: Run tests
         id: run-tests
         env:
-          # Simple by default; dual opts in the agent judge, which runs keyless on a
-          # Claude Code subscription via CLAUDE_CODE_OAUTH_TOKEN — no Console API key.
-          # JUDGE_AGENT (repo variable) swaps the ACP agent/model; empty uses the
-          # bundled Claude ACP agent.
+          # Simple by default; dual opts in the agent judge, which runs keyless via the
+          # runner's own Claude Code login (~/.claude on the self-hosted runner) — no
+          # Console API key, no secret. JUDGE_AGENT (repo variable) swaps the ACP
+          # agent/model; empty uses the bundled Claude ACP agent.
           JUDGE_MODE: ${{ inputs.judge_mode }}
           JUDGE_AGENT: ${{ vars.JUDGE_AGENT }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           cd cicd/tests
 

@@ -24,7 +24,7 @@ jobs:
   #   name: "Test: Auth"
   #   needs: build
   #   uses: ./.github/workflows/test-run.yml
-  #   secrets: inherit          # passes CLAUDE_CODE_OAUTH_TOKEN through for dual mode
+  #   secrets: inherit          # only if your test steps need project secrets (the judge needs none)
   #   with:
   #     tag: auth
   #     judge_mode: ${{ inputs.judge_mode }}
@@ -34,6 +34,6 @@ jobs:
     name: "Test: All"
     needs: build
     uses: ./.github/workflows/test-run.yml
-    secrets: inherit            # passes CLAUDE_CODE_OAUTH_TOKEN through for dual mode
+    secrets: inherit            # only if your test steps need project secrets (the judge needs none)
     with:
       judge_mode: ${{ inputs.judge_mode }}

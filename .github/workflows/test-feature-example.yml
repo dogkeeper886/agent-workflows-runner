@@ -30,7 +30,7 @@ on:
 jobs:
   test:
     uses: ./.github/workflows/test-run.yml
-    secrets: inherit                    # passes CLAUDE_CODE_OAUTH_TOKEN through for dual mode
+    secrets: inherit                    # only if your test steps need project secrets (the judge needs none)
     with:
       tag: "example"                    # <-- Change this to your feature tag
       judge_mode: ${{ inputs.judge_mode }}
