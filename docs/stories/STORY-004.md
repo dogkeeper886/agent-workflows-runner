@@ -69,8 +69,9 @@ endpoint. The gap is purely auth: there's no keyless option for the subscription
 ## Status
 
 - Created: 2026-06-13
+- Completed: 2026-06-13
 - Issues: #35
 - Plan: #36
-- Tasks: #37 ✓, #38, #39 ✓, #40
-- PRs: #41 (#37 + #39 — merged 2026-06-13)
+- Tasks: ✅ #37, ✅ #38, ✅ #39, ✅ #40 — all merged
+- PRs: #41 (#37 + #39), #43 (#40), #44 (#38) — all merged 2026-06-13
 - Tests: none

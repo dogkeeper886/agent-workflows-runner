@@ -260,6 +260,7 @@ The `.claude/` tooling splits in two — what gets **shipped into your project**
 | `/ci-testcase` | generate YAML test cases from requirements |
 | `/ci-run` | execute tests with guided output |
 | `/add-tool` | add new MCP tools following standard patterns |
+| `agent-runner-flow` | integration-test design rules — one connected, self-contained end-to-end flow |
 
 **Maintainer tooling in this repo** — the dev-workflow this repo is built with (see `CLAUDE.md` §5–6):
 
@@ -279,7 +280,7 @@ What `make install` lays down in your project:
 your-project/
 ├── CLAUDE.md                    # AI agent guidance
 ├── .claude/
-│   ├── skills/                  # /ci-testcase, /ci-run, /add-tool
+│   ├── skills/                  # /ci-testcase, /ci-run, /add-tool, agent-runner-flow
 │   └── rules/                   # YAML schema + CI workflow patterns
 ├── cicd/
 │   ├── tests/
