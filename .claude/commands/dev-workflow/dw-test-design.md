@@ -124,7 +124,7 @@ Fits into the dev-workflow chain after /dw-implement and before /dw-create-pr.
 **Generates YAML test case:**
 
     Created: cicd/tests/testcases/integration/TC-INTEGRATION-002.yml
-    Running: npm test -- --suite integration --no-llm
+    Running: npm test -- --suite integration
     Result: 2 tests passed (0 failed)
 
     Next: /dw-create-pr 47

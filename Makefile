@@ -6,8 +6,8 @@
 #
 # After installation, in your project:
 #   cd cicd/tests && npm install
-#   npm test
-#   npm test -- --no-llm
+#   npm test                  # simple judge (default)
+#   JUDGE_MODE=dual npm test  # opt in the agent judge
 
 SHELL := /bin/bash
 .PHONY: install help clean check diagrams
@@ -35,9 +35,9 @@ help:
 	@echo ""
 	@echo "After installation:"
 	@echo "  cd <TARGET>/cicd/tests && npm install"
-	@echo "  npm test              # Run all tests"
-	@echo "  npm test -- --no-llm  # Run without LLM judge"
-	@echo "  npm run list          # List available tests"
+	@echo "  npm test                  # Run all tests (simple judge — fast, no model)"
+	@echo "  JUDGE_MODE=dual npm test  # Opt in the agent judge (keyless)"
+	@echo "  npm run list              # List available tests"
 
 check:
 ifndef TARGET
@@ -115,14 +115,14 @@ install: check
 	@echo "  cd $(TARGET)/cicd/tests"
 	@echo "  npm install"
 	@echo ""
-	@echo "Configure Ollama URL:"
+	@echo "Configure the judge (optional):"
 	@echo "  Edit $(TARGET)/cicd/tests/src/config.ts"
-	@echo "  Set llm.defaultUrl to your Ollama server"
+	@echo "  Set judge.agent to swap the ACP agent (default: bundled Claude, keyless)"
 	@echo ""
 	@echo "Run tests:"
-	@echo "  npm test              # All tests with LLM judge"
-	@echo "  npm test -- --no-llm  # Without LLM judge"
-	@echo "  npm run list          # List available tests"
+	@echo "  npm test                  # All tests (simple judge — fast, no model)"
+	@echo "  JUDGE_MODE=dual npm test  # Opt in the agent judge (keyless)"
+	@echo "  npm run list              # List available tests"
 	@echo ""
 
 diagrams:
