@@ -64,7 +64,7 @@ Prompt the user with detected defaults:
    - Reporters: `reporter/console.ts`, `reporter/json.ts`, `reporter/index.ts`
    - Supporting: `package.json`, `tsconfig.json`
    - Conditional: `log-collector.ts` (Docker), `mcp-client.ts` (MCP)
-   - Skills: `ci-testcase`, `ci-run`, `add-tool` (to `.claude/skills/`)
+   - Skills: `ci-testcase`, `ci-run`, `add-tool`, `agent-runner-flow` (to `.claude/skills/`)
    - Rules: `test-yaml-format.md`, `workflow-patterns.md` (to `.claude/rules/`)
    - Examples: test case YAML files (if selected)
    - Scripts: `format-results.sh`
