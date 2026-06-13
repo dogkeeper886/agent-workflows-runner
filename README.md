@@ -25,7 +25,7 @@
 
 Testing on exit codes alone misses the failures that matter: a process exits `0` but produces the wrong output. This runner pairs a fast deterministic judge with an opt-in semantic one, so a test passes only when the result is *actually* right.
 
-Because the semantic judge drives its model through an Agent Client Protocol agent — keyless on a Claude Code subscription — the framework is more than a static-script checker for one product:
+Because the semantic judge brings a reasoning model to the verdict, the framework is more than a static-script checker for one product:
 
 | Use case | What it covers | Status |
 |----------|----------------|--------|
@@ -106,7 +106,7 @@ For CI, configure the judge through the environment instead of editing source:
 | `JUDGE_AGENT` | command that launches the ACP agent the judge drives; unset uses the bundled Claude ACP agent, keyless on a Claude Code subscription. Set it to another ACP agent to swap model/vendor — config, not code | unset |
 | `CLAUDE_CODE_OAUTH_TOKEN` | authenticates the bundled Claude agent on a GitHub-hosted CI runner; not needed on a self-hosted runner that's logged into Claude Code (`~/.claude`) | unset |
 
-> **Keyless by design.** The agent judge authenticates through the agent, not a Console API key. Locally and on a self-hosted runner it uses your Claude Code login (`~/.claude`); on a GitHub-hosted runner, set the `CLAUDE_CODE_OAUTH_TOKEN` secret. To judge with a different model or vendor, point `JUDGE_AGENT` at that ACP agent — the model lives in the agent, not here.
+> **Keyless by design.** The agent judge authenticates through the agent — your Claude Code login — not a Console API key, and the model lives in the agent, so swapping it (`JUDGE_AGENT`) is config, not code.
 
 ## Running tests
 
