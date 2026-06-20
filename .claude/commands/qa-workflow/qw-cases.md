@@ -2,9 +2,9 @@
 
 ```
 Turn a reviewed test plan into readable test docs in docs/tests/ — reusing vetted
-steps from the store instead of re-inventing them.
+steps where a reuse index is available, instead of re-inventing them.
 
-Target: the scenarios approved by /qw-review-plan for a STORY-XXX.
+Target: the reviewed `[STORY-XXX] Test Plan` issue from `/qw-review-plan` (its scenarios).
 
 ## PURPOSE
 
@@ -15,8 +15,8 @@ Action / Expected Result rows.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-run
-    (qw-run = `make up` + the cicd runner — a phase, not a slash command)
+    qw-plan → qw-review-plan → qw-cases → qw-review-cases   (the authoring half)
+    → hand off to the project's binding + run layer
 
 ---
 
@@ -24,32 +24,39 @@ Fits in the qa-workflow:
 
     /qw-cases STORY-003
         │
-        ├─► Step 1: One file per scenario
+        ├─► Step 1: Read the test-plan issue
+        │   - Find it (`test-plan` is qa's own label — distinct from dev's `plan`):
+        │       gh issue list --search "[STORY-XXX] Test Plan" --label test-plan --state all
+        │     Read its scenarios; note its number <plan>. (No plan issue → the scenarios
+        │     came from /qw-plan in chat; <plan> is absent.)
+        │
+        ├─► Step 2: One file per scenario
         │   - Create docs/tests/TS-NN-<slug>.md with front-matter:
         │       id, title, namespace, story (+ story_hash = sha256 of the story file),
+        │       plan: <plan> (the test-plan issue number — omit when there is none),
         │       issue, status: green
         │   - (Format and field meanings: docs/tests/README.md.)
         │
-        ├─► Step 2: Write each case (TC) — reuse before re-inventing (dogfood the store)
-        │   - For each step you are about to write, ask the store first:
-        │       make query Q="<the action you mean>"
-        │     If a vetted step comes back close, phrase yours to match it — same
-        │     meaning, same good expected result — instead of coining a new one.
+        ├─► Step 3: Write each case (TC) — reuse before re-inventing
+        │   - If the project has a reuse index, query it before writing: is the case's
+        │     objective already covered? is there a vetted step for the action you mean?
+        │     Reuse or extend a close match instead of coining a near-duplicate (optional).
         │   - Fill the Steps table: each row one Action + its Expected Result.
-        │
-        ├─► Step 3: Index + bind
-        │   - Load the new docs into the store:  npm --prefix step-store run load-tests
-        │   - Bind each case to its executable:  /qw-bind  (then /qw-review-bind)
         │
         └─► Step 4: Hand off
             - Run `/qw-review-cases` to gate the docs.
+            - Reviewed docs then hand to the project's binding + run layer — bind each case
+              to its executable and run it. (If a reuse index exists, the new docs get
+              indexed there.)
 
 ---
 
 ## API Notes
 
-- Reuse is the point of the store: `search_step` (via `make query`) makes a vetted
-  step findable so coverage converges instead of duplicating.
+- Reuse is optional: if the project has a reuse index, query it for a vetted case or
+  step before authoring a near-duplicate, so coverage converges instead of duplicating.
 - `story_hash`: `sha256sum docs/stories/STORY-XXX.md`.
+- `plan`: the `[STORY-XXX] Test Plan` issue number — the scenario source and the trace
+  back (see docs/tests/README.md). Absent for ad-hoc tests written without a plan.
 - Producer paired with `/qw-review-cases`.
 ```
