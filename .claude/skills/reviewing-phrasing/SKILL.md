@@ -33,7 +33,8 @@ These are **lenses, not steps** — they interact, and which bites hardest depen
 doc in hand. Weigh them together, and flag anything that weakens the writing even if it
 isn't named here.
 
-- **Reader.** Who actually reads this, and what do they already know? The phrasing meets
+- **Reader.** Who actually reads this, and what do they already know? Default to the
+  project's audience in `project-profile.md` when the doc doesn't say. The phrasing meets
   them there — no unexplained jargon for a newcomer, no over-explaining to a peer.
 - **Lead with the point.** The reader should hit what matters first, not after a runway of
   setup. Context that arrives before the point reads as not knowing the priority — or as
@@ -57,8 +58,8 @@ redundant, buried, or missing a hook. That spot is the finding.
 
 ## Steps
 
-1. **Scope.** Which doc(s), and who the reader is. If the reader isn't clear from the doc
-   or its context, ask before reviewing.
+1. **Scope.** Which doc(s), and who the reader is — default to the audience in
+   `project-profile.md` when the doc and its context don't say. If still unclear, ask.
 2. **Read it as that reader would** — once, straight through, for whether it lands.
 3. **Weigh the lenses** above by judgment; note anything else that hurts the phrasing.
 4. **Report** (below).

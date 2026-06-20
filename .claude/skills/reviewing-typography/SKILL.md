@@ -2,7 +2,7 @@
 name: reviewing-typography
 description: |
   Reviews how a human-read document looks — the README, the prose and tables in docs/, or
-  any markdown written for a person — for visual hierarchy, Gestalt proximity, restraint,
+  any human-read document — for visual hierarchy, Gestalt proximity, restraint,
   and walls of text, so a reader can find the point at a glance. The look half of the
   human-read doc review (reviewing-phrasing handles the words). Use when such a doc is
   written or restructured. Judgment over checklist; floor, not ceiling.
@@ -14,15 +14,17 @@ One reviewer for how a human-read document **looks**. Its partner `reviewing-phr
 judges how a doc *reads*; this judges how it *scans*. Together they are the human-read doc
 review.
 
-This skill's job is **human-read** markdown — the README, the prose, tables, and lists in
+This skill's job is **human-read** documents in the project's canonical format
+(`project-profile.md` — markdown by default) — the README, the prose, tables, and lists in
 `docs/`, and any doc aimed at a person. The **agent-read** workflow tooling — commands,
 skills, rules, CLAUDE.md, stories — is **not** this skill's job; whether those do their job
 goes to `reviewing-artifacts`.
 
-A markdown doc has no fonts to set, but it has the same levers UI typography uses, and the
-same principles decide whether it works: **heading levels** are size/weight, **blank lines
-and grouping** are spacing, **bold/italic** are weight, and **paragraph and list length**
-decide whether the page reads as structure or as soup.
+The principles are medium-agnostic; each format expresses them through its own levers. In
+markdown (the default) a doc has no fonts to set, but it has the same levers UI typography
+uses: **heading levels** are size/weight, **blank lines and grouping** are spacing,
+**bold/italic** are weight, and **paragraph and list length** decide whether the page reads
+as structure or as soup.
 
 ## Why this is a judgment skill, not a checklist
 
