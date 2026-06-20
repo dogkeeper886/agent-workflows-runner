@@ -65,4 +65,5 @@ running rather than deferring them.
 
 - Created: 2026-06-21
 - Plan: #48
-- Issues: #49, #50, #51, #52
+- Issues: #49 (PR #53, open), #50, #51, #52
+- PRs: #53 (#49) — open
