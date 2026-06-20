@@ -1,9 +1,12 @@
 # `docs/tests/` — the test-doc format
 
 Each test is a **readable markdown document** that lives here, close to the story it verifies.
-The markdown owns **why / what** (intent); the bound `cicd/` YAML owns **how it runs**
-(execution). `qw-bind` links them, `qw-review-bind` audits the link, and `qw-drift` watches
-for divergence — all via `npm --prefix cicd/tests` (`audit-bind` / `drift` / `port-yaml`).
+The markdown owns **why / what** (intent) — that authoring format is the contract this file
+defines, shared with upstream's `qa-workflow`. The bound `cicd/` YAML owns **how it runs**
+(execution): `qw-bind` links them, `qw-review-bind` audits the link, and `qw-drift` watches for
+divergence — all via `npm --prefix cicd/tests` (`audit-bind` / `drift` / `port-yaml`). That
+binding + run + drift layer is **this runner's own**, beyond the shared authoring format — its
+authoritative declaration is `.claude/rules/project-profile.md` → "binding + run + drift layer".
 
 ## One file = one scenario (TS), many cases (TC)
 
@@ -58,7 +61,11 @@ status: green                   # green | stale | unbound  (maintained by qw-dri
 The Steps table is **machine-extractable** on purpose: one row = one `Action → Expected Result`,
 and the row count is what `audit-bind` compares to the YAML's `steps:`.
 
-## Binding, running, drift (this repo's job)
+## Binding, running, drift — this runner's layer (beyond the authoring contract)
+
+Upstream's `qa-workflow` defers binding + run to "the project's own layer"; this repo *is* that
+layer. The commands below are the concrete form of `project-profile.md` → "binding + run + drift
+layer".
 
 - **Bind** (`qw-bind`): set each TC's `Script:` to the `cicd/tests/testcases/**/*.yml` that runs
   it. Or revert: `npm --prefix cicd/tests run port-yaml -- <yaml>` scaffolds a doc from a YAML.
@@ -72,6 +79,7 @@ and the row count is what `audit-bind` compares to the YAML's `steps:`.
 
 - **story → tests:** `grep -l 'story: STORY-XXX' docs/tests/`
 - **test → story / script:** the front-matter `story:` and each case's `Script:` line.
+- **test → plan:** the front-matter `plan:` line (the `[STORY-XXX] Test Plan` issue number).
 - **script → test:** the `Script:` path points at the YAML.
 
 No hand-maintained index — the links live in the files and resolve by `grep`/path.

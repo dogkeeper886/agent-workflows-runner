@@ -63,7 +63,8 @@ running rather than deferring them.
 
 ## Status
 
+- **Completed: 2026-06-21** — the runner now carries the upstream template's customization seam: `project-profile.md` holds every project-specific value, the generalized commands/skills/rules track upstream (re-syncable), and the runner's own binding/run/drift layer is preserved and declared as owned (PRs #53, #54, #55, #56).
 - Created: 2026-06-21
 - Plan: #48
-- Issues: ✅ #49 (PR #53), #50, #51, #52
-- PRs: ✅ #53 (#49) — merged
+- Issues: ✅ #49 (PR #53), ✅ #50 (PR #54), ✅ #51 (PR #55), ✅ #52 (PR #56)
+- PRs: ✅ #53 (#49), ✅ #54 (#50), ✅ #55 (#51), ✅ #56 (#52)
