@@ -71,3 +71,11 @@ review passes plus a plan issue on a typo is ritual, not rigor (see CLAUDE.md §
 - **GitHub issues** already hold the work; the plan is one too (the parent), so the
   approach, its review, and its history live where the tasks do — no separate plan store.
 - **CI** is the project's existing checks + human review — the merge gate, not a new pipeline.
+
+## Project-specific values
+
+Story paths, the `STORY-XXX` id scheme, label names + colours, the `[STORY-XXX]` /
+`Part of #<plan>` linking patterns, the `issue-<N>-<slug>` branch name, and the merge
+strategy are **not** owned by the `dw-*` commands — they resolve from
+`.claude/rules/project-profile.md`. The values a command shows are the defaults; change
+them in the profile, not the command.
