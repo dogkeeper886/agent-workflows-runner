@@ -4,12 +4,28 @@
  * Customize this file for your project's needs.
  */
 
+import 'dotenv/config'; // load cicd/tests/.env into process.env before any value below is read
+
 /**
  * Available test suites - extend this array for your project.
  * Examples: ['build', 'integration', 'e2e'] or ['build', 'runtime', 'inference', 'models']
  */
 export const SUITES: string[] = ['build', 'integration', 'e2e'];
 export type Suite = string;
+
+/**
+ * Pick a subset of environment variables by NAME → { name: value } map.
+ * Forwards a server's credentials (e.g. "API_URL,API_KEY") without hardcoding the
+ * values — they come from the environment / CI secrets.
+ */
+export function pickEnv(names: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const n of names.split(',').map((s) => s.trim()).filter(Boolean)) {
+    const v = process.env[n];
+    if (v !== undefined) out[n] = v;
+  }
+  return out;
+}
 
 /**
  * Project configuration.
@@ -50,7 +66,19 @@ export const CONFIG = {
 
   // MCP client settings (for projects using mcp-client.ts)
   mcp: {
-    serverCommand: 'node dist/mcpServer.js', // Override via MCP_SERVER_COMMAND env var
+    // Legacy: the single-tool client (mcp-client.ts) reads MCP_SERVER_COMMAND directly.
+    serverCommand: 'node dist/mcpServer.js',
+
+    // test-mcp (target + verifier paths): which real stdio MCP server to drive, and
+    // which model runtime drives it. Generic defaults — point them at your server/runtime
+    // via .env (see .env.example). Credentials are forwarded by NAME via MCP_ENV.
+    command: process.env.MCP_COMMAND || 'node dist/mcpServer.js',
+    args: (process.env.MCP_ARGS || '').split(' ').filter(Boolean),
+    cwd: process.env.MCP_CWD || undefined,
+    prompt: process.env.MCP_PROMPT || 'List the available items.',
+    env: pickEnv(process.env.MCP_ENV || ''),
+    backend: process.env.MCP_BACKEND || 'ollama', // selects the ChatBackend (model runtime)
+    host: process.env.OLLAMA_HOST || 'http://localhost:11434', // ollama backend host
   },
 };
 
