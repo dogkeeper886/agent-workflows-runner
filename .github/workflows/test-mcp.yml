@@ -1,0 +1,109 @@
+name: "Test: MCP tool-call"
+
+# Drives a model through a real MCP server's tools and grades it.
+#   mode: simple      — structural check (model called a real tool, valid args, answer)
+#         judge       — + keyless AgentJudge over the captured trajectory
+#         verify-live — + the judge calls the server's read-only tools itself vs live truth
+#
+# Prerequisites (this is a real integration, not a unit test):
+#   - a reachable stdio MCP server — configure via repo Variables MCP_COMMAND / MCP_ARGS
+#     / MCP_ENV (names of secrets to forward), or your project's defaults in config.ts
+#   - a reachable model runtime — MCP_BACKEND (default ollama) + OLLAMA_HOST
+#   - for judge / verify-live: CLAUDE_CODE_OAUTH_TOKEN secret (keyless agent auth)
+# A GitHub-hosted runner has neither a model host nor your MCP server by default —
+# run on a self-hosted runner, or wire the server/host through the env below.
+
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "Space-separated model names to test"
+        required: true
+        type: string
+      prompt:
+        description: "Prompt that should trigger a tool call (blank = config default)"
+        required: false
+        type: string
+      mode:
+        description: "Judge mode"
+        required: false
+        default: "simple"
+        type: choice
+        options: ["simple", "judge", "verify-live"]
+      verify_allow:
+        description: "verify-live: comma-separated read-only tool names the verifier may call"
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      models:
+        required: true
+        type: string
+      prompt:
+        required: false
+        type: string
+      mode:
+        required: false
+        default: "simple"
+        type: string
+      verify_allow:
+        required: false
+        type: string
+
+jobs:
+  test-mcp:
+    name: "Test: MCP tool-call"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: cd cicd/tests && npm ci
+
+      - name: Build test runner
+        run: cd cicd/tests && npm run build
+
+      - name: Run MCP tool-call test
+        env:
+          # Keyless agent auth for --judge / --verify-live (empty JUDGE_AGENT = bundled Claude agent).
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          JUDGE_AGENT: ${{ vars.JUDGE_AGENT }}
+          # Which real MCP server + model runtime to use (see config.ts / .env.example).
+          MCP_COMMAND: ${{ vars.MCP_COMMAND }}
+          MCP_ARGS: ${{ vars.MCP_ARGS }}
+          MCP_ENV: ${{ vars.MCP_ENV }}
+          MCP_BACKEND: ${{ vars.MCP_BACKEND }}
+          OLLAMA_HOST: ${{ vars.OLLAMA_HOST }}
+          MODELS: ${{ inputs.models }}
+          PROMPT: ${{ inputs.prompt }}
+          MODE: ${{ inputs.mode }}
+          VERIFY_ALLOW: ${{ inputs.verify_allow }}
+        run: |
+          cd cicd/tests
+          ARGS=(test-mcp)
+          for m in $MODELS; do ARGS+=("$m"); done
+          [ -n "$PROMPT" ] && ARGS+=(--prompt "$PROMPT")
+          case "$MODE" in
+            judge)       ARGS+=(--judge) ;;
+            verify-live) ARGS+=(--verify-live --verify-allow "$VERIFY_ALLOW") ;;
+          esac
+          ARGS+=(-o /tmp/mcp-results.json)
+
+          echo "Models: $MODELS | Mode: $MODE"
+          # The command prints a markdown summary to stdout; tee it into the CI step summary.
+          set -o pipefail
+          npx tsx src/cli.ts "${ARGS[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mcp-results
+          path: /tmp/mcp-results.json
