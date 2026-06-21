@@ -67,6 +67,8 @@ to point it at *their* system under test without editing shared code.
 
 ## Status
 
+- **Completed: 2026-06-21** — agent-driven testing via MCP now ships: a model drives a real MCP server's tools (the `ChatBackend`-seamed host), and the live verifier attaches the same server over ACP to check the answer against ground truth (read-only allow-list + deterministic cross-check, fail-closed). Vendor-neutral — the one runtime-specific piece is the swappable Ollama reference backend. README row 3 marked shipping (PRs #64–#69).
 - Created: 2026-06-21
 - Plan: #57
-- Issues: ✅ #58 (PR #64), ✅ #59 (PR #65), ✅ #60 (PR #66), ✅ #61 (PR #67), ✅ #62 (PR #68), #63
+- Issues: ✅ #58 (PR #64), ✅ #59 (PR #65), ✅ #60 (PR #66), ✅ #61 (PR #67), ✅ #62 (PR #68), ✅ #63 (PR #69)
+- PRs: ✅ #64 (#58), ✅ #65 (#59), ✅ #66 (#60), ✅ #67 (#61), ✅ #68 (#62), ✅ #69 (#63)
