@@ -72,3 +72,4 @@ to point it at *their* system under test without editing shared code.
 - Plan: #57
 - Issues: ✅ #58 (PR #64), ✅ #59 (PR #65), ✅ #60 (PR #66), ✅ #61 (PR #67), ✅ #62 (PR #68), ✅ #63 (PR #69)
 - PRs: ✅ #64 (#58), ✅ #65 (#59), ✅ #66 (#60), ✅ #67 (#61), ✅ #68 (#62), ✅ #69 (#63)
+- Follow-up: #70 — diagram for the two-path MCP testing / live verifier (caught in doc review)

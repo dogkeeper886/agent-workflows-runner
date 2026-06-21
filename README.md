@@ -55,7 +55,7 @@ The **simple judge** always runs — deterministic, model-free, milliseconds. Th
 
 The [Agent Client Protocol](https://agentclientprotocol.com) (ACP) is an open, vendor-neutral standard — created by [Zed Industries](https://zed.dev) — for driving coding agents over a JSON-RPC stdio link. The agent judge is an ACP **client**: it spawns a configured agent as a child process, runs one prompt turn per test (`initialize → session/new → session/prompt`), and reads back a JSON verdict — `{ pass, reason, evidence }`. It only evaluates — it refuses every tool-permission request the agent makes.
 
-![The agent judge as an ACP client: it spawns an ACP agent over stdio; the agent authenticates keyless and drives a model, returning a JSON verdict; JUDGE_AGENT swaps the agent](docs/diagrams/png/05-acp-agent-judge.png)
+![The agent judge as an ACP client: it spawns an ACP agent over stdio; the agent authenticates keyless and drives a model, returning a JSON verdict; JUDGE_AGENT swaps the agent. Attaching an MCP server to the session turns it into the live verifier (see MCP tool-call testing)](docs/diagrams/png/05-acp-agent-judge.png)
 
 Routing the verdict through ACP is what makes the headline claims true:
 
@@ -278,6 +278,8 @@ steps:
 ## MCP tool-call testing
 
 The `test-mcp` command answers two questions a static check can't: **can the model use the tools**, and **is its answer true**. Both run against your *real* MCP server — no mock.
+
+![Two paths to the same MCP server: the model under test drives the tool loop (results trusted into its trajectory), while the verifier — an ACP agent — calls the server's read-only tools itself to check the answer against live ground truth, fail-closed](docs/diagrams/png/06-mcp-verifier.png)
 
 ```bash
 cd cicd/tests
