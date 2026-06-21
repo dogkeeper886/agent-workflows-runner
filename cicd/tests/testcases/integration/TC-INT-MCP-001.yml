@@ -1,0 +1,27 @@
+id: TC-INT-MCP-001
+name: MCP tool call returns the server's data
+suite: integration
+goal: A single MCP tool call via mcp-client.ts returns the server's payload
+priority: 5
+timeout: 60000
+dependencies: []
+tags: [mcp]
+
+steps:
+  # Example of the single-tool MCP surface (mcp-client.ts): spawn a stdio MCP
+  # server, call one tool, assert on the result. Here it runs against the bundled
+  # mock server so the example passes with no external service or credentials.
+  # For your project, point MCP_SERVER_COMMAND at your real server.
+  - name: Call get_fact on the bundled mock MCP server
+    command: cd cicd/tests && MCP_SERVER_COMMAND="node_modules/.bin/tsx scripts/mock-mcp-server.ts" npx tsx src/mcp-client.ts get_fact '{}'
+    expectPatterns:
+      - "5500"
+      - "sky is blue"
+    rejectPatterns:
+      - "isError"
+
+criteria: |
+  The mcp-client connects to the MCP server, calls get_fact, and returns the
+  server's payload (the known fact). Verifies the project's MCP wiring end-to-end.
+  This is the single-tool surface; the model-driven loop and the live verifier are
+  the `test-mcp` command (see the README's "MCP tool-call testing" section).

@@ -69,4 +69,4 @@ to point it at *their* system under test without editing shared code.
 
 - Created: 2026-06-21
 - Plan: #57
-- Issues: ✅ #58 (PR #64), ✅ #59 (PR #65), ✅ #60 (PR #66), #61, #62, #63
+- Issues: ✅ #58 (PR #64), ✅ #59 (PR #65), ✅ #60 (PR #66), ✅ #61 (PR #67), #62, #63
