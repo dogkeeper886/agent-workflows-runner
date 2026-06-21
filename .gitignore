@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Local env (secrets) — committed only as .env.example
+.env
+
 # Build output
 dist/
 
