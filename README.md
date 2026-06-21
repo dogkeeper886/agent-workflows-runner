@@ -17,6 +17,7 @@
 - [Writing test cases](#writing-test-cases)
 - [CI workflow patterns](#ci-workflow-patterns)
 - [MCP testing](#mcp-testing)
+- [MCP tool-call testing](#mcp-tool-call-testing)
 - [Skills and commands](#skills-and-commands)
 - [Directory structure](#directory-structure)
 - [The agent family](#the-agent-family)
@@ -32,9 +33,9 @@ Because the semantic judge brings a reasoning model to the verdict, the framewor
 |----------|----------------|--------|
 | **Static / deterministic testing** | exit codes, expected patterns, error detection — the simple judge | **shipping** |
 | **AI-produced content testing & audit** | the agent judge grades generated output against human-readable criteria, not just pass/fail commands | **shipping** |
-| **Agent-driven testing via MCP** | the judge attaches MCP tools so an agent pulls in external resources to gather what a test needs | **roadmap** — where this is heading, not yet built |
+| **Agent-driven testing via MCP** | a model drives a real MCP server's tools, and the judge attaches the same server to verify the answer against live tool results | **shipping** |
 
-> The MCP-agent direction is not implemented. Today, `mcp-client.ts` lets a test call *your* MCP server's tools (see [MCP testing](#mcp-testing)) — that is "test your MCP server," not "the judge uses MCP."
+> Agent-driven testing via MCP now ships as the `test-mcp` command (see [MCP tool-call testing](#mcp-tool-call-testing)): one path drives the model-under-test through the server's tools; the other lets the judge call the server's read-only tools itself to check the answer against live ground truth. This is distinct from `mcp-client.ts`, which calls a single tool from a test step (see [MCP testing](#mcp-testing)).
 
 ## How the dual judge works
 
@@ -60,7 +61,7 @@ Routing the verdict through ACP is what makes the headline claims true:
 
 - **Keyless.** Authentication is the agent's job, not the judge's. The bundled Claude agent runs on your Claude Code subscription (`~/.claude` locally, `CLAUDE_CODE_OAUTH_TOKEN` in CI) — no Console API key.
 - **Any ACP agent.** Because ACP is a standard, the judge isn't tied to one vendor. Agents already exist for Gemini CLI, Codex CLI, GitHub Copilot, Goose, [and many more](https://agentclientprotocol.com/get-started/agents). This framework ships only the bundled Claude agent — but `JUDGE_AGENT` points the judge at any other, so changing model or vendor is config, not code.
-- **MCP-ready.** An ACP session can hand the agent a set of MCP servers. The judge opens its session with none and acts on no tools — it evaluates, it doesn't gather — but that same capability is the foundation for the roadmap's [agent-driven testing via MCP](#why-this-framework).
+- **MCP-capable.** An ACP session can hand the agent a set of MCP servers. The plain agent judge opens its session with none and acts on no tools — it evaluates, it doesn't gather. Attaching a server turns that same capability into the **live verifier**: the judge calls the server's read-only tools itself and checks the answer against live ground truth (see [MCP tool-call testing](#mcp-tool-call-testing)).
 
 If the agent can't be reached or isn't authenticated, the judge detects it up front and falls back to the simple judge with a notice.
 
@@ -247,6 +248,16 @@ jobs:
 
 ## MCP testing
 
+The framework tests MCP across **three surfaces**, smallest to strongest:
+
+| Surface | What it tests | How |
+|---------|---------------|-----|
+| **Single tool call** — `mcp-client.ts` | your server returns the right data | a test step calls one tool, you assert on the result |
+| **Model drives the tools** — `test-mcp` | the model picks the right tool, valid args, real result, a real answer | the model runs the server's tool loop end-to-end |
+| **Live verifier** — `test-mcp --verify-live` | the answer is *true* against live data | the judge calls the server's read-only tools itself and cross-checks |
+
+The single-tool surface is below; the model-driven and verifier surfaces are in [MCP tool-call testing](#mcp-tool-call-testing).
+
 For MCP server projects, `mcp-client.ts` spawns your server and calls a tool, so you can assert on the result in a test step:
 
 ```bash
@@ -262,7 +273,31 @@ steps:
     rejectPatterns: ["isError"]
 ```
 
-Requires `@modelcontextprotocol/sdk` in your project (`npm install @modelcontextprotocol/sdk`).
+`@modelcontextprotocol/sdk` ships with the runner — no separate install.
+
+## MCP tool-call testing
+
+The `test-mcp` command answers two questions a static check can't: **can the model use the tools**, and **is its answer true**. Both run against your *real* MCP server — no mock.
+
+```bash
+cd cicd/tests
+
+# 1. Can the model drive the tools? (structural: right tool, valid args, real result, an answer)
+npm run test:mcp -- llama3.1 --prompt "List the projects."
+
+# 2. + semantic check of the answer over the captured trajectory (keyless agent judge)
+npm run test:mcp -- llama3.1 --prompt "List the projects." --judge
+
+# 3. + verify against LIVE truth: the judge calls the server's read-only tools itself
+npm run test:mcp -- llama3.1 --prompt "List the projects." \
+  --verify-live --verify-allow list_projects
+```
+
+Point it at your server and model runtime in `.env` (copy `.env.example`): `MCP_COMMAND` / `MCP_ARGS` / `MCP_ENV` (credential **names**, never values), and `MCP_BACKEND` / `OLLAMA_HOST` for the model. It prints a per-model markdown summary and writes a JSON report with `-o`.
+
+**The live verifier** is the headline. `--verify-live` attaches your server to an isolated, keyless ACP agent and lets it call **only** the tools you allow-list (read-only by intent — enforced by a permission gate *and* the agent SDK's deny-list). It fetches the ground truth itself, grades the answer against it, and a deterministic cross-check overrides any answer that claims data the tools don't return. If the verifier can't authenticate, it **fails closed** — a clear FAIL, never a false green.
+
+Drive it in CI with `.github/workflows/test-mcp.yml` (`mode: simple | judge | verify-live`); the verifier needs `CLAUDE_CODE_OAUTH_TOKEN` and a reachable server + model host.
 
 ## Skills and commands
 
@@ -303,9 +338,10 @@ your-project/
 │   │   ├── src/
 │   │   │   ├── config.ts        # ← configure here
 │   │   │   ├── cli.ts  loader.ts  executor.ts  types.ts
-│   │   │   ├── mcp-client.ts    # MCP tool client (optional)
+│   │   │   ├── mcp-client.ts    # single-tool MCP client
+│   │   │   ├── mcp/             # test-mcp: chat-backend seam, host loop, backends/
 │   │   │   ├── log-collector.ts
-│   │   │   ├── judge/           # simple-judge.ts + agent-judge.ts
+│   │   │   ├── judge/           # simple + agent + verifier (live MCP) judges
 │   │   │   └── reporter/        # console + JSON
 │   │   ├── testcases/
 │   │   │   ├── build/           # ← your tests
