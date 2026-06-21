@@ -35,8 +35,28 @@ export class ConsoleReporter {
 
       console.log(`  Simple Judge: ${simpleStatus} - ${report.simpleJudge.reason}`);
       console.log(`  Agent Judge: ${agentStatus} - ${report.agentJudge.reason}`);
-      if (!report.agentJudge.pass && report.agentJudge.evidence) {
-        console.log(`  ${chalk.yellow('Evidence:')} ${report.agentJudge.evidence}`);
+
+      // Live-verifier detail (VerifierJudge sets these). All conditional, so a
+      // standard agent-judge run — which carries none of them — looks unchanged.
+      const aj = report.agentJudge;
+      if (aj.stages) {
+        const tick = (b: boolean) => (b ? chalk.green('✓') : chalk.red('✗'));
+        console.log(
+          `  Stages (tool·query·content): ${tick(aj.stages.tool)}·${tick(aj.stages.query)}·${tick(aj.stages.content)}`
+        );
+      }
+      if (aj.crossCheckUnsupported && aj.crossCheckUnsupported.length > 0) {
+        console.log(
+          `  ${chalk.yellow('Unsupported claims:')} ${aj.crossCheckUnsupported.join(', ')}`
+        );
+      }
+      if (!aj.pass && aj.evidence) {
+        console.log(`  ${chalk.yellow('Evidence:')} ${aj.evidence}`);
+      } else if (!aj.pass && aj.evidenceStatus && aj.evidenceStatus !== 'captured') {
+        // No evidence, but a verifier ran — say why instead of a silent blank.
+        console.log(
+          `  ${chalk.yellow('Evidence:')} — (${aj.evidenceStatus.replace(/-/g, ' ')})`
+        );
       }
 
       if (report.logFile) {

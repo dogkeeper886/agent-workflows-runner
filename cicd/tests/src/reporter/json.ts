@@ -124,6 +124,8 @@ export class JsonReporter {
         duration: r.duration,
         steps: r.steps,
         simpleJudge: r.simpleJudge,
+        // Whole Judgment is emitted, so the verifier's optional fields
+        // (evidenceStatus / stages / crossCheckUnsupported) serialize automatically.
         agentJudge: r.agentJudge,
       })),
     };
