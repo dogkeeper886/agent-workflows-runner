@@ -30,7 +30,7 @@ owns vs. what it hands off" boundary, made concrete.
 
 - stories dir: `docs/stories/`
 - tests dir: `docs/tests/`
-- images dir: `docs/diagrams/` (SVG source) → `docs/diagrams/png/` (rendered PNG)
+- diagrams dir: `docs/diagrams/` (SVG source) + `docs/diagrams/png/` (rendered)
 - story format contract: `docs/stories/README.md`
 - test format contract: `docs/tests/README.md`
 
@@ -71,7 +71,8 @@ project's choice.
 - test-doc filename: `TS-NN-<slug>.md` in the tests dir
 - front-matter fields: `id, title, namespace, story, story_hash, plan, status`
 - namespace: `test-framework`
-- story hash: `sha256` of the story file (`sha256sum`)
+- drift anchor: `story_hash` — the `sha256` of the story file (`sha256sum`), recorded so
+  `qw-drift` can tell the story has moved.
 - default status: `green` (drift states `stale` | `unbound`, maintained by `qw-drift`)
 
 ## Docs & diagrams
@@ -79,7 +80,7 @@ project's choice.
 - README output: `README.md`
 - diagram policy: SVG source committed under `docs/diagrams/`, rendered to PNG under
   `docs/diagrams/png/` via `make diagrams` (no Mermaid / inline diagram blocks)
-- images dir: `docs/diagrams/` (also under Paths)
+- diagrams dir: `docs/diagrams/` (SVG source) + `docs/diagrams/png/` (rendered) — also under Paths
 
 ## Review semantics
 
