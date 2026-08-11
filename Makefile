@@ -71,10 +71,10 @@ install: check
 	@cp "$(TEMPLATE_DIR)/cicd/tests/src/judge/"*.ts "$(TARGET)/cicd/tests/src/judge/"
 	@cp "$(TEMPLATE_DIR)/cicd/tests/src/reporter/"*.ts "$(TARGET)/cicd/tests/src/reporter/"
 
-	@# Copy example test cases
-	@cp "$(TEMPLATE_DIR)/cicd/tests/testcases/build/"*.yml "$(TARGET)/cicd/tests/testcases/build/"
-	@cp "$(TEMPLATE_DIR)/cicd/tests/testcases/integration/"*.yml "$(TARGET)/cicd/tests/testcases/integration/"
-	@cp "$(TEMPLATE_DIR)/cicd/tests/testcases/e2e/"*.yml "$(TARGET)/cicd/tests/testcases/e2e/"
+	@# Copy example test cases — from templates/, not this repo's live suite
+	@cp "$(TEMPLATE_DIR)/templates/testcases/build/"*.yml "$(TARGET)/cicd/tests/testcases/build/"
+	@cp "$(TEMPLATE_DIR)/templates/testcases/integration/"*.yml "$(TARGET)/cicd/tests/testcases/integration/"
+	@cp "$(TEMPLATE_DIR)/templates/testcases/e2e/"*.yml "$(TARGET)/cicd/tests/testcases/e2e/"
 
 	@# Copy scripts
 	@cp "$(TEMPLATE_DIR)/cicd/scripts/format-results.sh" "$(TARGET)/cicd/scripts/"
