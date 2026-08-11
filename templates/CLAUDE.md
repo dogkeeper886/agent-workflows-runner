@@ -97,13 +97,12 @@ qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-r
 doc-gen-readme → doc-review-readme → [human reviews] → PR
 ```
 
-Each flow and its producer→review pairing live in that plugin's own rules —
-`rules/dev-workflow.md`, `rules/doc-workflow.md`, `rules/qa-workflow.md`. Trivial work
-skips the plan: `dw-story → dw-tasks`. `qw-run` is `npm test`, a phase rather than a
-command, and `qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is the
-one gate — it exits non-zero, so wire it into CI if you want it to fail a build.
-Project-specific values — paths, labels, id schemes — resolve from your
-`.claude/rules/project-profile.md`, never from the commands.
+Each flow and its producer→review pairing live in the rules of the plugin that ships it —
+`rules/dev-workflow.md` and `rules/doc-workflow.md` in `agent-workflows`,
+`rules/qa-workflow.md` in `agent-workflows-runner`. Trivial work skips the plan:
+`dw-story → dw-tasks`. `qw-run` is `npm test`, a phase rather than a command, and
+`qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is the one gate — it
+exits non-zero, so wire it into CI if you want it to fail a build.
 
 Two review gates are external skills these plugins do not own — invoke them by hand:
 - `code-review` (bundled): adversarial diff review. Run after `dw-implement`,

@@ -351,6 +351,8 @@ AI-assisted test authoring:
 | `reviewing-artifacts` | agent-read artifact review (commands, skills, docs) | the `agent-workflows` plugin |
 | `review-docs-privacy` | security + documentation-quality review | this repo — `.claude/skills/` |
 
+The `reviewing-*` skills still have older copies under this repo's `.claude/skills/` that shadow the plugin's; removing them is pending.
+
 ## Directory structure
 
 What `make install` lays down in your project:

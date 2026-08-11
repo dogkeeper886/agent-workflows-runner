@@ -90,13 +90,16 @@ doc-gen-readme → doc-review-readme → [human reviews] → PR
 ```
 
 Each flow and its producer→review pairing live in that plugin's `rules/dev-workflow.md`
-and `rules/doc-workflow.md`. Trivial work skips the plan: `dw-story → dw-tasks`.
+and `rules/doc-workflow.md`. Trivial work skips the plan: `dw-story → dw-tasks`. The issue
+tracker is shared with the QA lifecycle — one issue gets both `dw-*` (the code) and `qw-*`
+(the tests), which anchor their docs to it by number.
 
 `dw-test-design` (after `dw-implement`, before `dw-create-pr` — it writes the tests) is
 the one dev command this repo carries, at `.claude/commands/dw-test-design.md`, because
-upstream does not ship it. It sits flat rather than in a `dev-workflow/` directory this
-repo no longer owns, and outside `plugins/agent-workflows-runner/` because that plugin's
-job is the `qw-*` lifecycle.
+upstream does not ship it. Its review is **running the suite** — the tests pass, native to
+the framework the project already uses — so it is the one pairing the plugin's rules do
+not state, having no row for a command they don't ship. Why it lives where it does:
+`docs/adr/0001-dw-test-design-stays-in-this-repo.md`.
 
 Two review gates are external skills this toolkit does not own — invoke them by hand:
 - `code-review` (bundled): adversarial diff review. Run after `dw-implement`,
@@ -124,8 +127,8 @@ Match the reviewer to **who reads** the file you changed:
 
 These ship from the upstream `agent-workflows` plugin, not from this repo. Like the
 dev-workflow gates, they stop for a human and never auto-run — invoke them by hand.
-(`.claude/skills/reviewing-*` here are stale forks that still shadow the plugin's copies —
-a separate cleanup.)
+(`.claude/skills/reviewing-*` here are stale forks that still shadow the plugin's copies.
+Invoking the skill by name is right either way; deleting the forks is a separate cleanup.)
 
 **Right-size it.** A typo or a one-line tweak does not need a review pass — use
 judgment. Reach for these when a change is substantial enough that the look, the
@@ -145,8 +148,8 @@ See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. Neither exists yet — they are
-created lazily when a term or decision actually resolves.
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root, created lazily when a term or
+decision actually resolves. `CONTEXT.md` does not exist yet; `docs/adr/` holds ADR-0001.
 See `docs/agents/domain.md`.
 
 ---
