@@ -28,7 +28,8 @@ diverging.
 
 `qw-plan`'s scenarios persist as a **GitHub issue**, titled `[#<spec>] Test Plan`, labelled
 `test-plan` (distinct from dev's `Plan`). `qw-review-plan` reviews it; `qw-cases` reads it and
-records the issue number in each `TS-*.md` `plan:` field.
+records the issue number in each `TS-*.md` `plan:` field. Nothing auto-closes it — no change
+request targets a test plan — so close it by hand once its docs have landed.
 
 ## Producer → review pairing
 

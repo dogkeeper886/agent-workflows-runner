@@ -30,7 +30,7 @@ files' "what this owns vs. what it hands off" boundary, made concrete.
 
 - stories dir: `docs/stories/`
 - tests dir: `docs/tests/`
-- images dir: `docs/diagrams/` (SVG source) → `docs/diagrams/png/` (rendered PNG)
+- diagrams dir: `docs/diagrams/` (SVG source) + `docs/diagrams/png/` (rendered)
 - story format contract: `docs/stories/README.md`
 - test format contract: `docs/tests/README.md`
 
@@ -79,7 +79,23 @@ project's choice.
 - README output: `README.md`
 - diagram policy: SVG source committed under `docs/diagrams/`, rendered to PNG under
   `docs/diagrams/png/` via `make diagrams` (no Mermaid / inline diagram blocks)
-- images dir: `docs/diagrams/` (also under Paths)
+- diagrams dir: `docs/diagrams/` (SVG source) + `docs/diagrams/png/` (rendered) — also under Paths
+
+## Reports
+
+The words a gate report uses. The contract itself — the questions a report answers and
+why — is `.claude/rules/agent-report.md`; a unit resolves the wording from here.
+
+- verdict vocabulary: `PASS` · `REVISE` · `HAND BACK`
+- extra verdict (artifact review only): `CUT` — the artifact duplicates another or does
+  nothing useful; propose removal
+- section names: `Verdict` · `Findings` · `Checked` · `Not done` · `Unresolved` ·
+  `Trace` · `Next`
+- empty-section marker: `none` (a section with nothing to report says so; it is not dropped)
+- finding columns: `# · severity · location · what's wrong · smallest fix`
+- formats by medium: chat session → plain text, tables, ASCII diagrams · document or
+  issue → whatever renders there. For a *published* human-read doc the diagram policy
+  under Docs & diagrams applies instead.
 
 ## Review semantics
 
