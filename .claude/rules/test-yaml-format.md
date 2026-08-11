@@ -1,6 +1,7 @@
 ---
 paths:
   - "cicd/tests/testcases/**/*.yml"
+  - "templates/testcases/**/*.yml"
   - "cicd/tests/src/types.ts"
   - "cicd/tests/src/loader.ts"
 ---

@@ -73,7 +73,7 @@ and the runner's README. This skill is the *why* and the *rules*.
 ## This project (fill this in)
 
 > **Replace this block with your project's concrete flow.** The framework ships
-> example cases under `cicd/tests/testcases/{build,integration,e2e}/` — standalone
+> example cases into `cicd/tests/testcases/{build,integration,e2e}/` — standalone
 > illustrations of the YAML schema, **not** a connected flow. Once your integration
 > tests form a real end-to-end chain, describe its instantiation here so the rules
 > above have a concrete referent:
