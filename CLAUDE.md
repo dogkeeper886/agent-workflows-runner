@@ -128,6 +128,24 @@ and never auto-run — invoke them by hand.
 judgment. Reach for these when a change is substantial enough that the look, the
 wording, or the artifact's fitness actually matters.
 
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on this repo, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, each label string equal to its name. Distinct from this project's
+`status:*` labels, which track pipeline position rather than readiness.
+See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. Neither exists yet — they are
+created lazily when a term or decision actually resolves.
+See `docs/agents/domain.md`.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
