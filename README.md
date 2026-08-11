@@ -1,10 +1,12 @@
 # agent-workflows-runner
 
-**The runner half of [`agent-workflows`](https://github.com/dogkeeper886/agent-workflows)** — a YAML-driven, dual-judge test framework: **a worked example you port into your own repo**, not a package you install unchanged.
+**The QA half of the [`agent-workflows`](https://github.com/dogkeeper886/agent-workflows) family** — a YAML-driven, dual-judge test framework, plus the `qw-*` commands that author the tests it runs: **a worked example you port into your own repo**, not a package you install unchanged.
 
-`agent-workflows` authors the commands and test docs; this repo runs the tests they describe. Fast and deterministic by default (the simple judge), with an opt-in agent judge as a second opinion — an Agent Client Protocol client that runs **keyless on a Claude Code subscription**, so no Console API key is needed and swapping the model or vendor is just configuration.
+This repo owns the whole QA lifecycle — plan, author, bind, audit, run. `agent-workflows` keeps the **ship tail** (branch → PR → merge), the **report contract**, and the review skills; the `qw-*` commands cite two of its rules, so it is a prerequisite rather than an alternative. Neither is complete alone.
 
-![The agent family: agent-workflows authors commands and test docs; this runner executes them; agent-studio wraps both into a product](docs/diagrams/png/01-agent-family.png)
+Testing here is fast and deterministic by default (the simple judge), with an opt-in agent judge as a second opinion — an Agent Client Protocol client that runs **keyless on a Claude Code subscription**, so no Console API key is needed and swapping the model or vendor is just configuration.
+
+![The agent family: agent-workflows ships the tail, the report contract and the review skills and is a prerequisite of this repo's plugin; this runner owns the whole QA lifecycle — plan, author, bind, run; agent-studio wraps both into a product](docs/diagrams/png/01-agent-family.png)
 
 ## Contents
 
@@ -303,9 +305,33 @@ Drive it in CI with `.github/workflows/test-mcp.yml` (`mode: simple | judge | ve
 
 ## Skills and commands
 
-The `.claude/` tooling splits in two — what gets **shipped into your project**, and what stays here as **maintainer tooling** for working on this repo.
+The tooling splits three ways — a **plugin you install**, skills **copied into your project** by `/install`, and **maintainer tooling** that stays here.
 
-**Shipped into your project by `/install`** — AI-assisted test authoring:
+### The QA lifecycle plugin — `qw-*`
+
+The commands that turn a spec into trustworthy tests ship as a Claude Code plugin, from this repo's own marketplace. Installing beats copying: a plugin update moves every project at once, where a copied `.claude/` directory leaves each repo on its own fork.
+
+```bash
+# Prerequisite: agent-workflows, whose agent-report and profile-doctrine rules
+# the qw-* commands cite. Claude Code can't express a dependency between plugins.
+/plugin marketplace add dogkeeper886/agent-workflows
+/plugin install agent-workflows@agent-workflows
+
+/plugin marketplace add dogkeeper886/agent-workflows-runner
+/plugin install agent-workflows-runner@agent-workflows-runner
+```
+
+| Producer → review | What the pair covers |
+|-------------------|----------------------|
+| `/qw-plan` → `/qw-review-plan` | what to test — scenarios persisted as a `[#<spec>] Test Plan` issue |
+| `/qw-cases` → `/qw-review-cases` | the test docs in `docs/tests/` (the [format contract](docs/tests/README.md)) |
+| `/qw-bind` → `/qw-review-bind` | each case bound to the YAML that runs it — the audit is the gate CI fails on |
+
+No producer ships without its review. Project-specific values — paths, labels, id schemes — resolve from your `.claude/rules/project-profile.md`, never from the commands.
+
+### Shipped into your project by `/install`
+
+AI-assisted test authoring:
 
 | Skill | Purpose |
 |-------|---------|
@@ -320,7 +346,6 @@ The `.claude/` tooling splits in two — what gets **shipped into your project**
 | Artifact | Role |
 |----------|------|
 | `dev-workflow/dw-*` commands | story → plan → tasks → implement → PR → merge pipeline |
-| `qa-workflow/qw-*` commands | test-doc planning, authoring, binding, drift |
 | `reviewing-phrasing` / `reviewing-typography` | human-read doc review — the words / the look |
 | `reviewing-artifacts` | agent-read artifact review (commands, skills, docs) |
 | `review-docs-privacy` | security + documentation-quality review |
@@ -363,8 +388,8 @@ This runner is one of three repos (see the diagram up top):
 
 | Repo | Role | Status |
 |------|------|--------|
-| [**agent-workflows**](https://github.com/dogkeeper886/agent-workflows) | dev-workflow + qa-workflow commands and the test docs they author | shipped |
-| **agent-workflows-runner** (this repo) | executes the test scripts the qa-workflow docs map to — a dual-judge framework (fast checks + opt-in agent judge) | shipped |
+| [**agent-workflows**](https://github.com/dogkeeper886/agent-workflows) | the ship tail (branch → PR → merge), the report contract, and the review skills — a prerequisite of this repo's plugin | shipped |
+| **agent-workflows-runner** (this repo) | the whole QA lifecycle: the `qw-*` commands that plan, author and bind test docs, and the dual-judge framework that runs them | shipped |
 | **agent-studio** | local-first web GUI over the workflows + runner; closes the Dev → QA → PM loop | working name (currently `ai-qa-studio`), planning |
 
 ## License

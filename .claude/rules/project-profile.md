@@ -2,6 +2,7 @@
 paths:
   - ".claude/commands/**/*.md"
   - ".claude/skills/**/*.md"
+  - "plugins/**/*.md"
 ---
 
 # project-profile
@@ -14,15 +15,14 @@ Customize a workflow by editing this file, not the units.
 **How a unit uses it.** Where a command or skill would otherwise bake in a value, it
 points at the matching section here (e.g. "create the *plan* label — see project-profile →
 Labels"). The values below are this runner's real values — the agent-workflows
-test-framework runner, the binding + run + drift layer that upstream's `qa-workflow` hands
-off to. Change a line here and every unit follows.
+test-framework runner, which owns the whole QA lifecycle: planning, authoring, binding,
+and the audit. Change a line here and every unit follows.
 
 **What belongs here vs. not.** This file is for **declarative** customization — a value or
 a list. A whole **procedure** (how this runner binds a doc to its YAML, runs the suite, and
-audits drift) is *not* a value; it lives in this repo's own commands (`qw-bind`,
-`qw-review-bind`, `qw-drift`) and the `cicd/` runner, never crammed into a general unit.
-Lists → here; procedures → a project-owned command. This is the rules files' "what this
-owns vs. what it hands off" boundary, made concrete.
+audits the pair) is *not* a value; it lives in the `qw-*` commands and the `cicd/` runner,
+never crammed into a general unit. Lists → here; procedures → a command. This is the rules
+files' "what this owns vs. what it hands off" boundary, made concrete.
 
 ---
 
@@ -41,7 +41,7 @@ owns vs. what it hands off" boundary, made concrete.
 - case id: `TC-NN`
 - executable (cicd YAML) id: `TC-<SUITE>-XXX` — `TC-BUILD-XXX`, `TC-INTEGRATION-XXX`, `TC-E2E-XXX`,
   one per suite dir under `cicd/tests/testcases/<suite>/`
-- title prefixes: `[STORY-XXX] Plan` · `[STORY-XXX] Test Plan` · `[STORY-XXX] <task>`
+- title prefixes: `[STORY-XXX] Plan` · `[#<spec>] Test Plan` · `[STORY-XXX] <task>`
 
 ## Labels
 
@@ -69,10 +69,10 @@ project's choice.
 ## Front-matter & format contract (test docs)
 
 - test-doc filename: `TS-NN-<slug>.md` in the tests dir
-- front-matter fields: `id, title, namespace, story, story_hash, plan, status`
+- front-matter fields: `id, title, namespace, spec, plan, status`
 - namespace: `test-framework`
-- story hash: `sha256` of the story file (`sha256sum`)
-- default status: `green` (drift states `stale` | `unbound`, maintained by `qw-drift`)
+- spec anchor: the issue number the intent came from — recorded unhashed, traced by a human
+- default status: `green` (the audit's other state is `unbound`, maintained by `qw-review-bind`)
 
 ## Docs & diagrams
 
@@ -91,18 +91,14 @@ project's choice.
   (`planning-…`, `drafting-…`)
 - audience (human-read docs): engineers and newcomers
 
-## This project's binding + run + drift layer (NOT deferred)
+## This project's binding + run layer
 
-Upstream's `qa-workflow` hands binding and running off to "the project's own layer." **This
-repo IS that layer.** Binding, audit, and drift are owned here, not deferred:
+The `qw-*` commands state the intent; these are the concrete commands behind it here:
 
 - bind a case to its executable: `qw-bind` → sets each TC's `Script:` to a
   `cicd/tests/testcases/**/*.yml`
-- audit a binding: `qw-review-bind` → `npm --prefix cicd/tests run audit-bind` (the `Script:`
-  resolves and the doc's step count matches the YAML's, else `unbound`)
+- audit a binding — the gate: `qw-review-bind` → `npm --prefix cicd/tests run audit-bind` (the
+  `Script:` resolves and the doc's step count matches the YAML's, else `unbound`)
 - run the suite (the `qw-run` phase — a phase, not a slash command): `npm test`
-- watch for drift: `qw-drift` → `npm --prefix cicd/tests run drift` (`stale` when `story_hash`
-  no longer matches the story)
 - scaffold a doc from a YAML: `npm --prefix cicd/tests run port-yaml -- <yaml>`
-- reuse index: **none** — reuse is the optional enhancement upstream describes; it is not
-  present here.
+- reuse index: **none** — reuse is an optional enhancement; it is not present here.

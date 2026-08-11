@@ -66,8 +66,8 @@ review passes plus a plan issue on a typo is ritual, not rigor (see CLAUDE.md §
 
 ## What is reused, not rebuilt
 
-- **The story + issues** are shared with `qa-workflow` — one `STORY-XXX` gets both `dw-*`
-  (code) and `qw-*` (tests).
+- **The issue tracker** is shared with `qa-workflow` — one issue gets both `dw-*` (code) and
+  `qw-*` (tests), which anchor their docs to it by number.
 - **GitHub issues** already hold the work; the plan is one too (the parent), so the
   approach, its review, and its history live where the tasks do — no separate plan store.
 - **CI** is the project's existing checks + human review — the merge gate, not a new pipeline.

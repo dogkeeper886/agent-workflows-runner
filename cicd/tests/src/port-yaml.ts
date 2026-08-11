@@ -4,7 +4,7 @@
  * The "revert direction" — bootstrap a human-readable test doc *from* an
  * executable that already exists, so the in-repo apparatus gets its canonical
  * half without re-authoring it. The output is a scaffold: it carries the steps
- * and the `Script:` binding; the objective, expected results, and story link
+ * and the `Script:` binding; the objective, expected results, and spec anchor
  * are TODOs for a human/agent to fill, then `qw-review-bind` audits the result.
  *
  * Run: npm run port-yaml -- cicd/tests/testcases/build/TC-BUILD-001.yml > docs/tests/TS-NN-slug.md
@@ -46,15 +46,13 @@ process.stdout.write(`---
 id: TS-NN
 title: ${name}
 namespace: TODO
-story: STORY-NNN
-issue: TODO
+spec: TODO
 status: unbound
-story_hash: TODO
 ---
 
 ## Why this scenario exists
 
-TODO: link this to the story's need.
+TODO: link this to the need the spec issue states.
 
 ### TC-01: ${name}
 
