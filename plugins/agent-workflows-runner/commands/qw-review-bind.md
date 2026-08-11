@@ -38,12 +38,13 @@ Fits in the qa-workflow:
     /qw-review-bind
         │
         ├─► Step 1: Run the deterministic audit
-        │     npm --prefix cicd/tests run audit-bind
+        │   The project declares which command that is — see project-profile → binding + run
+        │   layer. Here: `npm --prefix cicd/tests run audit-bind`.
         │   For each case it checks:
         │     - the `Script:` path resolves to a file, and
         │     - the doc's step count matches the executable's step count.
-        │   A failure prints `UNBOUND` with the reason; the command exits non-zero
-        │   (so CI gates on it). A run over zero docs warns — nothing was checked.
+        │   A failure prints `UNBOUND` with the reason; the command exits non-zero,
+        │   so CI can gate on it. A run over zero docs warns — nothing was checked.
         │
         ├─► Step 2: Read the meaning the audit can't
         │   For each `bound` case, skim that the doc's Actions/Expected Results
@@ -66,8 +67,8 @@ first, and a section with nothing to report says so.
 
 ## API Notes
 
-- The audit is structural + deterministic; it is the runnable check CI gates on. Semantic
-  agreement is the reviewer's job.
+- The audit is structural + deterministic, and exits non-zero — the runnable check a CI job
+  can gate on. Semantic agreement is the reviewer's job.
 - `unbound` is one of the test doc's `status` values (see the format contract).
 - A test doc's `spec` anchor is a trace for a human, not a signal this gate reads —
   resolving it would put a network call in a CI check.

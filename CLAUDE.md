@@ -85,7 +85,8 @@ This repo owns that whole lifecycle. The commands ship as **this repo's own plug
 (`plugins/agent-workflows-runner/`) — install it rather than copying the directory; the
 full flow + pairing lives in its `rules/qa-workflow.md`. `qw-run` is `npm test`, a phase
 rather than a command, and `qw-review-bind`'s audit
-(`npm --prefix cicd/tests run audit-bind`) is the one gate that fails a build.
+(`npm --prefix cicd/tests run audit-bind`) is its one gate — it exits non-zero, though no
+CI job wires it up yet.
 
 **doc-workflow** is the sibling that turns a codebase into its README — same gated
 discipline:

@@ -47,7 +47,8 @@ Fits in the qa-workflow:
 
     /qw-bind cicd/tests/testcases/build/TC-BUILD-001.yml
         │
-        ├─► Generate a scaffold from the executable:
+        ├─► Generate a scaffold from the executable — the project declares the scaffolder
+        │   (project-profile → binding + run layer). Here:
         │     npm --prefix cicd/tests run port-yaml -- <yaml> > docs/tests/TS-NN-<slug>.md
         │   The scaffold carries the steps and the `Script:` binding; objective,
         │   expected results, spec anchor, and namespace are TODOs.

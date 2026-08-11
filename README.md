@@ -325,7 +325,7 @@ The commands that turn a spec into trustworthy tests ship as a Claude Code plugi
 |-------------------|----------------------|
 | `/qw-plan` → `/qw-review-plan` | what to test — scenarios persisted as a `[#<spec>] Test Plan` issue |
 | `/qw-cases` → `/qw-review-cases` | the test docs in `docs/tests/` (the [format contract](docs/tests/README.md)) |
-| `/qw-bind` → `/qw-review-bind` | each case bound to the YAML that runs it — the audit is the gate CI fails on |
+| `/qw-bind` → `/qw-review-bind` | each case bound to the YAML that runs it — the audit is the gate, exiting non-zero for CI |
 
 No producer ships without its review. Project-specific values — paths, labels, id schemes — resolve from your `.claude/rules/project-profile.md`, never from the commands.
 

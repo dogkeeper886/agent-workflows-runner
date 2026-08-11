@@ -9,8 +9,8 @@
  *     the pair has diverged).
  * A case that fails is `unbound`. Exits non-zero if any case is unbound, so CI
  * can gate on it — this is the qa-workflow's one gate (#76: the story-hash
- * staleness signal was retired with the story files that fed it, and the drift
- * wrapper around this audit went with it).
+ * staleness signal was retired when the command that authored story files went
+ * away, and the drift wrapper around this audit went with it).
  *
  * Run: npm run audit-bind
  */

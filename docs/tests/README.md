@@ -66,11 +66,11 @@ and the row count is what `audit-bind` compares to the YAML's `steps:`.
 - **Bind** (`qw-bind`): set each TC's `Script:` to the `cicd/tests/testcases/**/*.yml` that runs
   it. Or revert: `npm --prefix cicd/tests run port-yaml -- <yaml>` scaffolds a doc from a YAML.
 - **Audit** (`qw-review-bind`): `npm --prefix cicd/tests run audit-bind` — the `Script:` resolves
-  and the step counts match, else `unbound`. Exits non-zero, so CI gates on it.
+  and the step counts match, else `unbound`. Exits non-zero, so a CI job can gate on it.
 - **Run**: `npm test` (the cicd assert-first runner).
 
 The audit is the **only** gate. A doc diverging from its executable is caught; intent moving
-underneath a doc is not — see the `qw-*` plugin's `qa-workflow.md`.
+underneath a doc is not — see `plugins/agent-workflows-runner/rules/qa-workflow.md`.
 
 ## Traceability
 

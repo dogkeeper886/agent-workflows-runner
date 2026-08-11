@@ -84,8 +84,8 @@ qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-r
 Those commands come from the `agent-workflows-runner` plugin — install it (and its
 prerequisite `agent-workflows`) rather than copying them in; the full flow + pairing lives
 in its `rules/qa-workflow.md`. `qw-run` is `npm test`, a phase rather than a command, and
-`qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is the one gate that
-fails a build.
+`qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is the one gate — it
+exits non-zero, so wire it into CI if you want it to fail a build.
 
 **doc-workflow** is the sibling that turns a codebase into its README — same gated
 discipline:

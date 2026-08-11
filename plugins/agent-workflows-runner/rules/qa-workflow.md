@@ -18,10 +18,10 @@ diverging.
             │
             ▼
    qw-bind ───────► qw-review-bind      bind each case to its executable, then audit
-            │                            the pair — the gate CI runs
+            │                            the pair — the gate, exiting non-zero for CI
             ▼
-   qw-run                               `npm test` — the project's runner. A phase, not
-                                         a slash command.
+   qw-run                               run the suite (the project's runner — see
+                                         project-profile). A phase, not a slash command.
 ```
 
 ## The test-plan issue
@@ -42,10 +42,13 @@ No producer ships without a review covering its output.
 
 ## What this owns — and what it hands off
 
-- **Owns:** the authoring flow, the `docs/tests/` test-doc format (the contract), the binding,
-  and the binding audit — the one gate that fails a build when a doc and its executable diverge.
-- **Hands off:** running the suite is the project's runner (`qw-run`). Reusing vetted steps (a
-  search index) is an **optional** project enhancement.
+- **Owns:** the whole lifecycle — the authoring flow, the `docs/tests/` test-doc format (the
+  contract), the binding, the binding audit (the one gate that fails on a doc and its executable
+  diverging), and running the suite. Nothing here is deferred to somebody else's layer.
+- **Resolves from the profile:** which command runs the suite and which runs the audit. The
+  lifecycle is owned; the concrete invocations are project values.
+- **Optional:** reusing vetted steps via a search index — a project enhancement, not part of the
+  flow.
 
 The format a test doc must follow is the project's test format contract — see
 `project-profile.md` → Paths.
