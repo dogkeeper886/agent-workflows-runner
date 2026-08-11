@@ -1,12 +1,13 @@
 # `docs/tests/` — the test-doc format
 
-Each test is a **readable markdown document** that lives here, close to the story it verifies.
-The markdown owns **why / what** (intent) — that authoring format is the contract this file
-defines, shared with upstream's `qa-workflow`. The bound `cicd/` YAML owns **how it runs**
-(execution): `qw-bind` links them, `qw-review-bind` audits the link, and `qw-drift` watches for
-divergence — all via `npm --prefix cicd/tests` (`audit-bind` / `drift` / `port-yaml`). That
-binding + run + drift layer is **this runner's own**, beyond the shared authoring format — its
-authoritative declaration is `.claude/rules/project-profile.md` → "binding + run + drift layer".
+Each test is a **readable markdown document** that lives here, close to the spec it verifies.
+The markdown owns **why / what** (intent); the bound `cicd/` YAML owns **how it runs**
+(execution). `qw-bind` links them and `qw-review-bind` audits the link — via
+`npm --prefix cicd/tests` (`audit-bind` / `port-yaml`).
+
+This file is the format contract, defined once and here: the `qw-*` commands ship in this
+repo's own plugin (`plugins/agent-workflows-runner/`) and resolve this path from
+`.claude/rules/project-profile.md` → Paths.
 
 ## One file = one scenario (TS), many cases (TC)
 
@@ -31,15 +32,14 @@ docs/tests/
 id: TS-01                       # scenario id, unique within the namespace
 title: Stack builds and runs its lifecycle
 namespace: test-framework       # which repo/tenant this test belongs to
-story: STORY-001                # the need this scenario verifies (→ docs/stories/STORY-001.md)
-story_hash: 7474d8b6…           # sha256 of the linked story file at last sync (drift anchor)
-plan: 28                        # the [STORY-XXX] Test Plan issue it was authored from (optional)
-status: green                   # green | stale | unbound  (maintained by qw-drift)
+spec: 76                        # the issue this scenario's intent came from
+plan: 28                        # the [#<spec>] Test Plan issue it was authored from (optional)
+status: green                   # green | unbound  (maintained by qw-review-bind)
 ---
 ```
 
-- `story` + `story_hash` are the **drift anchor**: when the story changes, its hash no longer
-  matches and `qw-drift` flags the scenario `stale`.
+- `spec` is the **trace back to intent** — an issue number, recorded unhashed. A human follows
+  it; no gate resolves it, because resolving it means a network call inside a CI check.
 - The **`Script:` binding is per-TC, not in front-matter** — a scenario's cases can map to
   different executables.
 
@@ -61,25 +61,22 @@ status: green                   # green | stale | unbound  (maintained by qw-dri
 The Steps table is **machine-extractable** on purpose: one row = one `Action → Expected Result`,
 and the row count is what `audit-bind` compares to the YAML's `steps:`.
 
-## Binding, running, drift — this runner's layer (beyond the authoring contract)
-
-Upstream's `qa-workflow` defers binding + run to "the project's own layer"; this repo *is* that
-layer. The commands below are the concrete form of `project-profile.md` → "binding + run + drift
-layer".
+## Binding, running, auditing
 
 - **Bind** (`qw-bind`): set each TC's `Script:` to the `cicd/tests/testcases/**/*.yml` that runs
   it. Or revert: `npm --prefix cicd/tests run port-yaml -- <yaml>` scaffolds a doc from a YAML.
 - **Audit** (`qw-review-bind`): `npm --prefix cicd/tests run audit-bind` — the `Script:` resolves
-  and the step counts match, else `unbound`.
+  and the step counts match, else `unbound`. Exits non-zero, so a CI job can gate on it.
 - **Run**: `npm test` (the cicd assert-first runner).
-- **Drift** (`qw-drift`): `npm --prefix cicd/tests run drift` — `stale` if `story_hash` no longer
-  matches the story; `unbound` if a doc and its script diverged.
+
+The audit is the **only** gate. A doc diverging from its executable is caught; intent moving
+underneath a doc is not — see `plugins/agent-workflows-runner/rules/qa-workflow.md`.
 
 ## Traceability
 
-- **story → tests:** `grep -l 'story: STORY-XXX' docs/tests/`
-- **test → story / script:** the front-matter `story:` and each case's `Script:` line.
-- **test → plan:** the front-matter `plan:` line (the `[STORY-XXX] Test Plan` issue number).
+- **spec → tests:** `grep -l 'spec: <N>' docs/tests/`
+- **test → spec / script:** the front-matter `spec:` and each case's `Script:` line.
+- **test → plan:** the front-matter `plan:` line (the `[#<spec>] Test Plan` issue number).
 - **script → test:** the `Script:` path points at the YAML.
 
 No hand-maintained index — the links live in the files and resolve by `grep`/path.

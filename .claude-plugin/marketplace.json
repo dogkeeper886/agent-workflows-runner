@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "agent-workflows-runner",
+  "description": "This repository is its own marketplace: it hosts the agent-workflows-runner plugin from the same tree it develops it in, so the placed copy and the tested copy are one thing.",
+  "owner": {
+    "name": "dogkeeper886"
+  },
+  "plugins": [
+    {
+      "name": "agent-workflows-runner",
+      "description": "The whole QA lifecycle as slash commands: qw-plan and qw-cases author test docs, qw-bind binds each case to the executable that runs it, and qw-review-bind audits the pair for divergence. Each producer is paired with a review gate; every project-specific value resolves from that project's .claude/rules/project-profile.md. Requires the agent-workflows plugin for the shared report and profile-doctrine rules.",
+      "source": "./plugins/agent-workflows-runner",
+      "category": "workflow",
+      "homepage": "https://github.com/dogkeeper886/agent-workflows-runner"
+    }
+  ]
+}

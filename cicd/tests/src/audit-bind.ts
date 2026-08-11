@@ -8,7 +8,9 @@
  *     signal — if the executable gains/loses steps without the doc following,
  *     the pair has diverged).
  * A case that fails is `unbound`. Exits non-zero if any case is unbound, so CI
- * (and the drift gate, #27) can gate on it.
+ * can gate on it — this is the qa-workflow's one gate (#76: the story-hash
+ * staleness signal was retired when the command that authored story files went
+ * away, and the drift wrapper around this audit went with it).
  *
  * Run: npm run audit-bind
  */
@@ -83,6 +85,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const findings = auditBindings();
   for (const f of findings) {
     console.log(`${f.bound ? 'bound  ' : 'UNBOUND'}  ${f.doc} ${f.tc} — ${f.detail}`);
+  }
+  // A clean run over zero docs is "nothing checked", not "all good" — surface it.
+  if (scenarioFiles(TESTS_DIR).length === 0) {
+    console.log('WARNING: no test docs in docs/tests/ — the binding audit checked nothing.');
   }
   const unbound = findings.filter((f) => !f.bound).length;
   console.log(`\n${findings.length} case(s), ${unbound} unbound`);

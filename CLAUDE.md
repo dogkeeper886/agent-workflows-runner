@@ -74,14 +74,19 @@ dw-story → dw-review-story → dw-plan → [human reviews the plan issue]
 The full flow + producer→review pairing lives in `.claude/rules/dev-workflow.md`. Trivial
 work skips the plan: `dw-story → dw-tasks`.
 
-**qa-workflow** is the sibling pipeline — same gated discipline, turning a story into
-trustworthy test docs:
+**qa-workflow** is the sibling pipeline — same gated discipline, turning a spec into
+trustworthy tests:
 
 ```
-qw-plan → qw-review-plan → qw-cases → qw-review-cases
+qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
 ```
 
-The full flow + pairing lives in `.claude/rules/qa-workflow.md`.
+This repo owns that whole lifecycle. The commands ship as **this repo's own plugin**
+(`plugins/agent-workflows-runner/`) — install it rather than copying the directory; the
+full flow + pairing lives in its `rules/qa-workflow.md`. `qw-run` is `npm test`, a phase
+rather than a command, and `qw-review-bind`'s audit
+(`npm --prefix cicd/tests run audit-bind`) is its one gate — it exits non-zero, though no
+CI job wires it up yet.
 
 **doc-workflow** is the sibling that turns a codebase into its README — same gated
 discipline:
@@ -122,6 +127,24 @@ and never auto-run — invoke them by hand.
 **Right-size it.** A typo or a one-line tweak does not need a review pass — use
 judgment. Reach for these when a change is substantial enough that the look, the
 wording, or the artifact's fitness actually matters.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on this repo, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, each label string equal to its name. Distinct from this project's
+`status:*` labels, which track pipeline position rather than readiness.
+See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. Neither exists yet — they are
+created lazily when a term or decision actually resolves.
+See `docs/agents/domain.md`.
 
 ---
 
