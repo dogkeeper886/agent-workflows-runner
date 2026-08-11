@@ -63,47 +63,48 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## 5. Workflow discipline
 
 Substantial work flows through a pipeline; each step is a gate that stops for a
-human decision (commands suggest the next, they never auto-run it):
+human decision (commands suggest the next, they never auto-run it).
 
-```
-dw-story → dw-review-story → dw-plan → [human reviews the plan issue]
-        → dw-tasks → dw-review-tasks → dw-implement → dw-review-implement
-        → dw-create-pr → [human review + /review] → dw-merge
-```
-
-The full flow + producer→review pairing lives in `.claude/rules/dev-workflow.md`. Trivial
-work skips the plan: `dw-story → dw-tasks`.
-
-**qa-workflow** is the sibling pipeline — same gated discipline, turning a spec into
-trustworthy tests:
+**qa-workflow** is the lifecycle this repo owns — turning a spec into trustworthy tests:
 
 ```
 qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
 ```
 
-This repo owns that whole lifecycle. The commands ship as **this repo's own plugin**
-(`plugins/agent-workflows-runner/`) — install it rather than copying the directory; the
-full flow + pairing lives in its `rules/qa-workflow.md`. `qw-run` is `npm test`, a phase
-rather than a command, and `qw-review-bind`'s audit
-(`npm --prefix cicd/tests run audit-bind`) is its one gate — it exits non-zero, though no
-CI job wires it up yet.
+The commands ship as **this repo's own plugin** (`plugins/agent-workflows-runner/`) —
+install it rather than copying the directory; the full flow + pairing lives in its
+`rules/qa-workflow.md`. `qw-run` is `npm test`, a phase rather than a command, and
+`qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is its one gate — it
+exits non-zero, though no CI job wires it up yet.
 
-**doc-workflow** is the sibling that turns a codebase into its README — same gated
-discipline:
+**The dev and doc pipelines come from the upstream `agent-workflows` plugin.** This repo
+consumes them; it does not carry copies. Install that plugin — it is a prerequisite of
+this repo's own, and without it these commands don't exist here:
 
 ```
+dw-story → dw-review-story → dw-plan → [human reviews the plan issue]
+        → dw-tasks → dw-review-tasks → dw-implement → dw-review-implement
+        → dw-create-pr → [human review + /review] → dw-merge
+
 doc-gen-readme → doc-review-readme → [human reviews] → PR
 ```
 
-The full flow + pairing lives in `.claude/rules/doc-workflow.md`.
+Each flow and its producer→review pairing live in that plugin's `rules/dev-workflow.md`
+and `rules/doc-workflow.md`. Trivial work skips the plan: `dw-story → dw-tasks`.
+
+`dw-test-design` (after `dw-implement`, before `dw-create-pr` — it writes the tests) is
+the one dev command this repo carries, at `.claude/commands/dw-test-design.md`, because
+upstream does not ship it. It sits flat rather than in a `dev-workflow/` directory this
+repo no longer owns, and outside `plugins/agent-workflows-runner/` because that plugin's
+job is the `qw-*` lifecycle.
 
 Two review gates are external skills this toolkit does not own — invoke them by hand:
 - `code-review` (bundled): adversarial diff review. Run after `dw-implement`,
   alongside `dw-review-implement`. Earns its cost on logic/risk; skip for pure docs.
 - `/review` (builtin): PR overview. Run after `dw-create-pr`, before `dw-merge`.
 
-Don't wire these into the `dw-*` commands — they may not exist in every install,
-and a command that references a missing skill is a dangling pointer.
+Don't wire these into the commands this repo ships — they may not exist in every
+install, and a command that references a missing skill is a dangling pointer.
 
 **Right-size it.** A typo or a one-line doc change does not need the full chain —
 use judgment; branch + PR + merge is enough. The three review passes overlap:
@@ -121,8 +122,10 @@ Match the reviewer to **who reads** the file you changed:
   `reviewing-artifacts` (does it do its job — one job, complete, goal-not-spec,
   fits the project, right for its reader).
 
-These are skills this project owns. Like the dev-workflow gates, they stop for a human
-and never auto-run — invoke them by hand.
+These ship from the upstream `agent-workflows` plugin, not from this repo. Like the
+dev-workflow gates, they stop for a human and never auto-run — invoke them by hand.
+(`.claude/skills/reviewing-*` here are stale forks that still shadow the plugin's copies —
+a separate cleanup.)
 
 **Right-size it.** A typo or a one-line tweak does not need a review pass — use
 judgment. Reach for these when a change is substantial enough that the look, the

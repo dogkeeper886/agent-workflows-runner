@@ -305,7 +305,7 @@ Drive it in CI with `.github/workflows/test-mcp.yml` (`mode: simple | judge | ve
 
 ## Skills and commands
 
-The tooling splits three ways — a **plugin you install**, skills **copied into your project** by `/install`, and **maintainer tooling** that stays here.
+The tooling splits three ways — a **plugin you install**, skills **copied into your project** by `/install`, and the **maintainer tooling** this repo is built with.
 
 ### The QA lifecycle plugin — `qw-*`
 
@@ -341,14 +341,15 @@ AI-assisted test authoring:
 | `/add-tool` | add new MCP tools following standard patterns |
 | `agent-runner-flow` | integration-test design rules — one connected, self-contained end-to-end flow |
 
-**Maintainer tooling in this repo** — the dev-workflow this repo is built with (see `CLAUDE.md` §5–6):
+**Maintainer tooling** — the workflow this repo is built with (see `CLAUDE.md` §5–6). Most of it is installed, not carried here:
 
-| Artifact | Role |
-|----------|------|
-| `dev-workflow/dw-*` commands | story → plan → tasks → implement → PR → merge pipeline |
-| `reviewing-phrasing` / `reviewing-typography` | human-read doc review — the words / the look |
-| `reviewing-artifacts` | agent-read artifact review (commands, skills, docs) |
-| `review-docs-privacy` | security + documentation-quality review |
+| Artifact | Role | Comes from |
+|----------|------|------------|
+| `dw-*` and `doc-*` commands | story → plan → tasks → implement → PR → merge, and codebase → README | the `agent-workflows` plugin |
+| `dw-test-design` | writes the tests after implement, native to whatever framework the project already uses | this repo — `.claude/commands/` |
+| `reviewing-phrasing` / `reviewing-typography` | human-read doc review — the words / the look | the `agent-workflows` plugin |
+| `reviewing-artifacts` | agent-read artifact review (commands, skills, docs) | the `agent-workflows` plugin |
+| `review-docs-privacy` | security + documentation-quality review | this repo — `.claude/skills/` |
 
 ## Directory structure
 

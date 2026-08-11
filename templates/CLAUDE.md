@@ -63,7 +63,21 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## 5. Workflow discipline
 
 Substantial work flows through a pipeline; each step is a gate that stops for a
-human decision (commands suggest the next, they never auto-run it):
+human decision (commands suggest the next, they never auto-run it).
+
+These pipelines are **plugins you install** — nothing here ships them, and none of their
+commands exist in this project until you do. `agent-workflows` carries the dev and doc
+pipelines; `agent-workflows-runner` carries the `qw-*` QA lifecycle and requires it:
+
+```bash
+/plugin marketplace add dogkeeper886/agent-workflows
+/plugin install agent-workflows@agent-workflows
+
+/plugin marketplace add dogkeeper886/agent-workflows-runner
+/plugin install agent-workflows-runner@agent-workflows-runner
+```
+
+**dev-workflow** — a need into shipped code:
 
 ```
 dw-story → dw-review-story → dw-plan → [human reviews the plan issue]
@@ -71,37 +85,32 @@ dw-story → dw-review-story → dw-plan → [human reviews the plan issue]
         → dw-create-pr → [human review + /review] → dw-merge
 ```
 
-The full flow + producer→review pairing lives in `.claude/rules/dev-workflow.md`. Trivial
-work skips the plan: `dw-story → dw-tasks`.
-
-**qa-workflow** is the sibling pipeline — same gated discipline, turning a spec into
-trustworthy tests:
+**qa-workflow** — a spec into trustworthy tests:
 
 ```
 qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
 ```
 
-Those commands come from the `agent-workflows-runner` plugin — install it (and its
-prerequisite `agent-workflows`) rather than copying them in; the full flow + pairing lives
-in its `rules/qa-workflow.md`. `qw-run` is `npm test`, a phase rather than a command, and
-`qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is the one gate — it
-exits non-zero, so wire it into CI if you want it to fail a build.
-
-**doc-workflow** is the sibling that turns a codebase into its README — same gated
-discipline:
+**doc-workflow** — a codebase into its README:
 
 ```
 doc-gen-readme → doc-review-readme → [human reviews] → PR
 ```
 
-The full flow + pairing lives in `.claude/rules/doc-workflow.md`.
+Each flow and its producer→review pairing live in that plugin's own rules —
+`rules/dev-workflow.md`, `rules/doc-workflow.md`, `rules/qa-workflow.md`. Trivial work
+skips the plan: `dw-story → dw-tasks`. `qw-run` is `npm test`, a phase rather than a
+command, and `qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is the
+one gate — it exits non-zero, so wire it into CI if you want it to fail a build.
+Project-specific values — paths, labels, id schemes — resolve from your
+`.claude/rules/project-profile.md`, never from the commands.
 
-Two review gates are external skills this toolkit does not own — invoke them by hand:
+Two review gates are external skills these plugins do not own — invoke them by hand:
 - `code-review` (bundled): adversarial diff review. Run after `dw-implement`,
   alongside `dw-review-implement`. Earns its cost on logic/risk; skip for pure docs.
 - `/review` (builtin): PR overview. Run after `dw-create-pr`, before `dw-merge`.
 
-Don't wire these into the `dw-*` commands — they may not exist in every install,
+Don't wire these into the pipeline commands — they may not exist in every install,
 and a command that references a missing skill is a dangling pointer.
 
 **Right-size it.** A typo or a one-line doc change does not need the full chain —
@@ -120,8 +129,8 @@ Match the reviewer to **who reads** the file you changed:
   `reviewing-artifacts` (does it do its job — one job, complete, goal-not-spec,
   fits the project, right for its reader).
 
-These are skills this project owns. Like the dev-workflow gates, they stop for a human
-and never auto-run — invoke them by hand.
+These ship from the `agent-workflows` plugin installed above. Like the dev-workflow
+gates, they stop for a human and never auto-run — invoke them by hand.
 
 **Right-size it.** A typo or a one-line tweak does not need a review pass — use
 judgment. Reach for these when a change is substantial enough that the look, the
