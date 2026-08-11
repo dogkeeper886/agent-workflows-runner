@@ -88,4 +88,4 @@ path / `gh`.
 
 The approach, the task breakdown, and the build history are the **plan issue** and **task
 issues'** concern, not this format's. The story records the need; the issues carry the how
-(see `.claude/rules/dev-workflow.md`).
+(see the `agent-workflows` plugin's `rules/dev-workflow.md`).
