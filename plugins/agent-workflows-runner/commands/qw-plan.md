@@ -85,16 +85,8 @@ Fits in the qa-workflow:
 
 ## OUTPUT
 
-The test-plan issue URL and its scenarios. Reported per `agent-report` — the verdict first,
-and a section with nothing to report says so.
-
----
-
-## OUTPUT
-
 The test-plan issue. Trace carries its URL; Next is the paired review. Reported per
-`.claude/rules/agent-report.md` — the verdict first, and a section with nothing to
-report says so.
+`agent-report` — the verdict first, and a section with nothing to report says so.
 
 ---
 
