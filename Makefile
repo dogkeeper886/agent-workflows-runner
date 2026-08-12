@@ -83,8 +83,8 @@ install: check
 	@# Copy GitHub workflows
 	@cp "$(TEMPLATE_DIR)/.github/workflows/"*.yml "$(TARGET)/.github/workflows/" 2>/dev/null || true
 
-	@# Copy CLAUDE.md if it exists
-	@if [ -f "$(TEMPLATE_DIR)/CLAUDE.md" ]; then cp "$(TEMPLATE_DIR)/CLAUDE.md" "$(TARGET)/CLAUDE.md"; fi
+	@# Copy the adopting project's CLAUDE.md — templates/, not this repo's own
+	@if [ -f "$(TEMPLATE_DIR)/templates/CLAUDE.md" ]; then cp "$(TEMPLATE_DIR)/templates/CLAUDE.md" "$(TARGET)/CLAUDE.md"; fi
 
 	@# Copy Claude skills if they exist
 	@if [ -d "$(TEMPLATE_DIR)/.claude/skills" ]; then \
