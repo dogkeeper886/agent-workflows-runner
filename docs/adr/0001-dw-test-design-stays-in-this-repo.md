@@ -10,7 +10,7 @@ We keep it here and move it flat, to `.claude/commands/dw-test-design.md`.
 ## Considered Options
 
 - **Move it into `plugins/agent-workflows-runner/commands/`** — this repo's own plugin,
-  and the candidate the ticket named. Rejected: that plugin's stated job is the `qw-*` QA
+  and the candidate the ticket named. Rejected: that plugin's stated job is the `qa-*` QA
   lifecycle, and a `dw-*` command inside it would be a second job. The command also
   references `/dw-implement` and `/dw-create-pr`, which ship from a *different* plugin —
   shipping it here would hand every installing project a command whose chain has a

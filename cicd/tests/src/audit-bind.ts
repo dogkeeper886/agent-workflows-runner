@@ -37,7 +37,7 @@ export interface BindFinding {
  * This is a structural signal: equal counts mean "same number of steps", not
  * "same steps" — a count-preserving edit (swap/reorder) stays `bound`. That is
  * the floor for an audit-not-codegen design; semantic agreement is the
- * reviewer's job in /qw-review-bind.
+ * reviewer's job in /qa-review-bind.
  */
 function yamlStepCount(path: string): number {
   let inSteps = false;

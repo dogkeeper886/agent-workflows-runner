@@ -16,21 +16,21 @@ Values — this project's:
 Check each test doc does one clear job, has observable steps, and traces back to
 its spec — before it is bound and run.
 
-Target: the docs/tests/TS-*.md docs written by /qw-cases for a spec.
+Target: the docs/tests/TS-*.md docs written by /qa-cases for a spec.
 
 ## PURPOSE
 
-The paired review for `/qw-cases`. Gates the written docs for quality and traceability.
+The paired review for `/qa-cases`. Gates the written docs for quality and traceability.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
+    qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-review-bind → qa-run
 
 ---
 
 ## WORKFLOW
 
-    /qw-review-cases 76
+    /qa-review-cases 76
         │
         ├─► Step 1: Each doc
         │   - [ ] One scenario, one job; cases are coherent slices of it.
@@ -44,7 +44,7 @@ Fits in the qa-workflow:
         │   - [ ] No duplicate of an existing scenario for the same spec.
         │
         └─► Step 3: Decision
-            - PASS: docs do their job and trace back → hand off to `/qw-bind`.
+            - PASS: docs do their job and trace back → hand off to `/qa-bind`.
             - REVISE: fix the named doc — smallest change first — and re-check.
 
 ---
@@ -58,7 +58,7 @@ with nothing to report says so.
 
 ## API Notes
 
-- This reviews the *doc* (intent); the doc↔script binding is reviewed in `/qw-review-bind`.
+- This reviews the *doc* (intent); the doc↔script binding is reviewed in `/qa-review-bind`.
 - Published-deliverable phrasing/typography is out of scope here.
-- Review paired with the producer `/qw-cases`.
+- Review paired with the producer `/qa-cases`.
 ```

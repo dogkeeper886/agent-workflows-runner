@@ -2,10 +2,10 @@
 
 Each test is a **readable markdown document** that lives here, close to the spec it verifies.
 The markdown owns **why / what** (intent); the bound `cicd/` YAML owns **how it runs**
-(execution). `qw-bind` links them and `qw-review-bind` audits the link — via
+(execution). `qa-bind` links them and `qa-review-bind` audits the link — via
 `npm --prefix cicd/tests` (`audit-bind` / `port-yaml`).
 
-This file is the format contract, defined once and here: the `qw-*` commands ship in this
+This file is the format contract, defined once and here: the `qa-*` commands ship in this
 repo's own plugin (`plugins/agent-workflows-runner/`) and resolve this path from
 `.claude/rules/project-profile.md` → Paths.
 
@@ -34,7 +34,7 @@ title: Stack builds and runs its lifecycle
 namespace: test-framework       # which repo/tenant this test belongs to
 spec: 76                        # the issue this scenario's intent came from
 plan: 28                        # the [#<spec>] Test Plan issue it was authored from (optional)
-status: green                   # green | unbound  (maintained by qw-review-bind)
+status: green                   # green | unbound  (maintained by qa-review-bind)
 ---
 ```
 
@@ -63,9 +63,9 @@ and the row count is what `audit-bind` compares to the YAML's `steps:`.
 
 ## Binding, running, auditing
 
-- **Bind** (`qw-bind`): set each TC's `Script:` to the `cicd/tests/testcases/**/*.yml` that runs
+- **Bind** (`qa-bind`): set each TC's `Script:` to the `cicd/tests/testcases/**/*.yml` that runs
   it. Or revert: `npm --prefix cicd/tests run port-yaml -- <yaml>` scaffolds a doc from a YAML.
-- **Audit** (`qw-review-bind`): `npm --prefix cicd/tests run audit-bind` — the `Script:` resolves
+- **Audit** (`qa-review-bind`): `npm --prefix cicd/tests run audit-bind` — the `Script:` resolves
   and the step counts match, else `unbound`. Exits non-zero, so a CI job can gate on it.
 - **Run**: `npm test` (the cicd assert-first runner).
 

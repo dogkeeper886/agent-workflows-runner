@@ -22,12 +22,12 @@ Target: a docs/tests/TS-*.md scenario, or an executable to port.
 
 Binding is **audit, not codegen**: the markdown owns *intent* (why / what), the
 executable owns *execution* (how it runs). This command establishes the link between
-them; its paired review `/qw-review-bind` checks the link still holds.
+them; its paired review `/qa-review-bind` checks the link still holds.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
-    (qw-run = `npm test` — the project's runner; a phase, not a slash command)
+    qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-review-bind → qa-run
+    (qa-run = `npm test` — the project's runner; a phase, not a slash command)
 
 ---
 
@@ -35,17 +35,17 @@ Fits in the qa-workflow:
 
 ### A. Forward — bind an existing test doc
 
-    /qw-bind docs/tests/TS-01-stack-lifecycle.md
+    /qa-bind docs/tests/TS-01-stack-lifecycle.md
         │
         ├─► For each `### TC-NN:` case, set a `Script:` line to the executable that
         │   runs it (e.g. cicd/tests/testcases/integration/TC-INTEGRATION-001.yml).
         ├─► Keep the case's Steps table aligned 1:1 with the executable's steps — the
         │   audit treats a step-count mismatch as `unbound`.
-        └─► Run `/qw-review-bind` to confirm the binding.
+        └─► Run `/qa-review-bind` to confirm the binding.
 
 ### B. Revert — port an executable into a doc scaffold
 
-    /qw-bind cicd/tests/testcases/build/TC-BUILD-001.yml
+    /qa-bind cicd/tests/testcases/build/TC-BUILD-001.yml
         │
         ├─► Generate a scaffold from the executable — the project declares the scaffolder
         │   (project-profile → binding + run layer). Here:
@@ -54,7 +54,7 @@ Fits in the qa-workflow:
         │   expected results, spec anchor, and namespace are TODOs.
         ├─► Fill the TODOs: `namespace`, `spec` (the issue the intent came from), each
         │   TC's objective and Expected Result column. (Format contract: project-profile → Paths.)
-        └─► Run `/qw-review-bind` to confirm the binding, then `/qw-review-cases` for meaning.
+        └─► Run `/qa-review-bind` to confirm the binding, then `/qa-review-cases` for meaning.
 
 ---
 
@@ -69,5 +69,5 @@ and a section with nothing to report says so.
 
 - `port-yaml` is a scaffolder, not a translator — a human/agent fills meaning.
 - The binding + audit commands are project values — see project-profile.
-- Producer paired with `/qw-review-bind` (the audit).
+- Producer paired with `/qa-review-bind` (the audit).
 ```

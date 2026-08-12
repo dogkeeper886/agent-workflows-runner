@@ -5,7 +5,7 @@
  * executable that already exists, so the in-repo apparatus gets its canonical
  * half without re-authoring it. The output is a scaffold: it carries the steps
  * and the `Script:` binding; the objective, expected results, and spec anchor
- * are TODOs for a human/agent to fill, then `qw-review-bind` audits the result.
+ * are TODOs for a human/agent to fill, then `qa-review-bind` audits the result.
  *
  * Run: npm run port-yaml -- cicd/tests/testcases/integration/TC-INT-MCP-001.yml > docs/tests/TS-NN-slug.md
  */

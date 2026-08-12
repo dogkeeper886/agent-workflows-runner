@@ -20,7 +20,7 @@ and the audit. Change a line here and every unit follows.
 
 **What belongs here vs. not.** This file is for **declarative** customization — a value or
 a list. A whole **procedure** (how this runner binds a doc to its YAML, runs the suite, and
-audits the pair) is *not* a value; it lives in the `qw-*` commands and the `cicd/` runner,
+audits the pair) is *not* a value; it lives in the `qa-*` commands and the `cicd/` runner,
 never crammed into a general unit. Lists → here; procedures → a command. This is the rules
 files' "what this owns vs. what it hands off" boundary, made concrete.
 
@@ -72,7 +72,7 @@ project's choice.
 - front-matter fields: `id, title, namespace, spec, plan, status`
 - namespace: `test-framework`
 - spec anchor: the issue number the intent came from — recorded unhashed, traced by a human
-- default status: `green` (the audit's other state is `unbound`, maintained by `qw-review-bind`)
+- default status: `green` (the audit's other state is `unbound`, maintained by `qa-review-bind`)
 
 ## Docs & diagrams
 
@@ -109,12 +109,12 @@ why — is `.claude/rules/agent-report.md`; a unit resolves the wording from her
 
 ## This project's binding + run layer
 
-The `qw-*` commands state the intent; these are the concrete commands behind it here:
+The `qa-*` commands state the intent; these are the concrete commands behind it here:
 
-- bind a case to its executable: `qw-bind` → sets each TC's `Script:` to a
+- bind a case to its executable: `qa-bind` → sets each TC's `Script:` to a
   `cicd/tests/testcases/**/*.yml`
-- audit a binding — the gate: `qw-review-bind` → `npm --prefix cicd/tests run audit-bind` (the
+- audit a binding — the gate: `qa-review-bind` → `npm --prefix cicd/tests run audit-bind` (the
   `Script:` resolves and the doc's step count matches the YAML's, else `unbound`)
-- run the suite (the `qw-run` phase — a phase, not a slash command): `npm test`
+- run the suite (the `qa-run` phase — a phase, not a slash command): `npm test`
 - scaffold a doc from a YAML: `npm --prefix cicd/tests run port-yaml -- <yaml>`
 - reuse index: **none** — reuse is an optional enhancement; it is not present here.

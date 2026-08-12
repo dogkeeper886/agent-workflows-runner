@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "agent-workflows-runner",
-  "description": "The QA lifecycle (qw-*): plan what to test, author the test docs, bind each case to its executable, and audit the pair. Doctrine travels in this plugin; a project's values stay in that project's .claude/rules/project-profile.md. Prerequisite: the agent-workflows plugin, whose report and profile-doctrine rules these commands cite.",
+  "description": "The QA lifecycle (qa-*): plan what to test, author the test docs, bind each case to its executable, and audit the pair. Doctrine travels in this plugin; a project's values stay in that project's .claude/rules/project-profile.md. Prerequisite: the agent-workflows plugin, whose report and profile-doctrine rules these commands cite.",
   "author": {
     "name": "dogkeeper886"
   },

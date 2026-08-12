@@ -16,28 +16,28 @@ Values — this project's:
 Check the proposed scenarios cover the spec — and stay coverage, not a frozen
 step-by-step spec of their own.
 
-Target: the `[#<spec>] Test Plan` issue written by `/qw-plan` (label `test-plan`).
+Target: the `[#<spec>] Test Plan` issue written by `/qa-plan` (label `test-plan`).
 
 ## PURPOSE
 
-The paired review for `/qw-plan`. Gates the persisted **test-plan issue** before
-`qw-cases` writes any docs, so coverage gaps are caught cheaply. See `qa-workflow.md`.
+The paired review for `/qa-plan`. Gates the persisted **test-plan issue** before
+`qa-cases` writes any docs, so coverage gaps are caught cheaply. See `qa-workflow.md`.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
+    qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-review-bind → qa-run
 
 ---
 
 ## WORKFLOW
 
-    /qw-review-plan 76
+    /qa-review-plan 76
         │
         ├─► Step 1: Read the test-plan issue
         │   - Find it (`test-plan` is qa's own label — distinct from dev's `plan`):
         │       gh issue list --search "[#<spec>] Test Plan" --label test-plan --state all
         │     (ad-hoc target: search "Test Plan: <subject>"). Read its scenarios.
-        │   - If none exists, report and stop (run `/qw-plan` first).
+        │   - If none exists, report and stop (run `/qa-plan` first).
         │
         ├─► Step 2: Coverage vs the spec
         │   - [ ] Every item in the spec's success criteria maps to a scenario.
@@ -51,8 +51,8 @@ Fits in the qa-workflow:
         │
         └─► Step 4: Decision (recorded on the issue)
             - PASS: covers the spec → comment "Reviewed — covers the spec" on the issue;
-              proceed to `/qw-cases`.
-            - REVISE: comment the missing or excess scenario on the issue; back to `/qw-plan`.
+              proceed to `/qa-cases`.
+            - REVISE: comment the missing or excess scenario on the issue; back to `/qa-plan`.
 
 ---
 
@@ -65,7 +65,7 @@ the verdict first, and a section with nothing to report says so.
 
 ## API Notes
 
-- Coverage gate only — step detail is `qw-cases`/`qw-review-cases`'s job.
-- Review paired with the producer `/qw-plan`; it gates the persisted
+- Coverage gate only — step detail is `qa-cases`/`qa-review-cases`'s job.
+- Review paired with the producer `/qa-plan`; it gates the persisted
   `[#<spec>] Test Plan` issue, recording PASS/REVISE as a comment on it.
 ```

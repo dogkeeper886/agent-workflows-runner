@@ -16,7 +16,7 @@ Values — this project's:
 Turn a reviewed test plan into readable test docs in docs/tests/ — reusing vetted
 steps where a reuse index is available, instead of re-inventing them.
 
-Target: the reviewed `[#<spec>] Test Plan` issue from `/qw-review-plan` (its scenarios).
+Target: the reviewed `[#<spec>] Test Plan` issue from `/qa-review-plan` (its scenarios).
 
 ## PURPOSE
 
@@ -27,19 +27,19 @@ Action / Expected Result rows.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
+    qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-review-bind → qa-run
 
 ---
 
 ## WORKFLOW
 
-    /qw-cases 76
+    /qa-cases 76
         │
         ├─► Step 1: Read the test-plan issue
         │   - Find it (`test-plan` is qa's own label — distinct from dev's `plan`):
         │       gh issue list --search "[#<spec>] Test Plan" --label test-plan --state all
         │     Read its scenarios; note its number <plan>. (No plan issue → the scenarios
-        │     came from /qw-plan in chat; <plan> is absent.)
+        │     came from /qa-plan in chat; <plan> is absent.)
         │
         ├─► Step 2: One file per scenario
         │   - Create docs/tests/TS-NN-<slug>.md with front-matter:
@@ -55,9 +55,9 @@ Fits in the qa-workflow:
         │   - Fill the Steps table: each row one Action + its Expected Result.
         │
         └─► Step 4: Hand off
-            - Run `/qw-review-cases` to gate the docs.
-            - Reviewed docs then go to `/qw-bind` — bind each case to its executable, then
-              `/qw-review-bind` and run. (If a reuse index exists, the new docs get indexed
+            - Run `/qa-review-cases` to gate the docs.
+            - Reviewed docs then go to `/qa-bind` — bind each case to its executable, then
+              `/qa-review-bind` and run. (If a reuse index exists, the new docs get indexed
               there.)
 
 ---
@@ -79,5 +79,5 @@ report says so.
   did would need a network call.
 - `plan`: the `[#<spec>] Test Plan` issue number — the scenario source and the trace
   back. Absent for ad-hoc tests written without a plan.
-- Producer paired with `/qw-review-cases`.
+- Producer paired with `/qa-review-cases`.
 ```

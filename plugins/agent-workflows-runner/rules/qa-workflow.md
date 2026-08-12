@@ -11,23 +11,23 @@ diverging.
    the spec issue the tests exist for   ──or──  "write a test for X"   (on request)
             │
             ▼
-   qw-plan ───────► qw-review-plan      what to test — scenarios persisted as the
+   qa-plan ───────► qa-review-plan      what to test — scenarios persisted as the
             │                            [#<spec>] Test Plan issue
             ▼
-   qw-cases ──────► qw-review-cases     write docs/tests/TS-*.md (the format contract)
+   qa-cases ──────► qa-review-cases     write docs/tests/TS-*.md (the format contract)
             │
             ▼
-   qw-bind ───────► qw-review-bind      bind each case to its executable, then audit
+   qa-bind ───────► qa-review-bind      bind each case to its executable, then audit
             │                            the pair — the gate, exiting non-zero for CI
             ▼
-   qw-run                               run the suite (the project's runner — see
+   qa-run                               run the suite (the project's runner — see
                                          project-profile). A phase, not a slash command.
 ```
 
 ## The test-plan issue
 
-`qw-plan`'s scenarios persist as a **GitHub issue**, titled `[#<spec>] Test Plan`, labelled
-`test-plan` (distinct from dev's `Plan`). `qw-review-plan` reviews it; `qw-cases` reads it and
+`qa-plan`'s scenarios persist as a **GitHub issue**, titled `[#<spec>] Test Plan`, labelled
+`test-plan` (distinct from dev's `Plan`). `qa-review-plan` reviews it; `qa-cases` reads it and
 records the issue number in each `TS-*.md` `plan:` field. Nothing auto-closes it — no change
 request targets a test plan — so close it by hand once its docs have landed.
 
@@ -35,9 +35,9 @@ request targets a test plan — so close it by hand once its docs have landed.
 
 | Producer | Review | Covers |
 |----------|--------|--------|
-| `qw-plan`  | `qw-review-plan`  | does the plan cover the spec? |
-| `qw-cases` | `qw-review-cases` | each doc: one job, observable, traces back |
-| `qw-bind`  | `qw-review-bind`  | doc ↔ executable still agree, else `unbound` |
+| `qa-plan`  | `qa-review-plan`  | does the plan cover the spec? |
+| `qa-cases` | `qa-review-cases` | each doc: one job, observable, traces back |
+| `qa-bind`  | `qa-review-bind`  | doc ↔ executable still agree, else `unbound` |
 
 No producer ships without a review covering its output.
 
@@ -75,7 +75,7 @@ install steps name it.
 
 The `docs/tests/` path, the `test-plan` label + colour, the `TS-`/`TC-` id schemes, the test-doc
 front-matter fields, the default status, and the binding + audit commands are **not** owned by the
-`qw-*` units. They resolve from `.claude/rules/project-profile.md`. The values a command shows are
+`qa-*` units. They resolve from `.claude/rules/project-profile.md`. The values a command shows are
 the defaults; change them in the profile, not the command.
 
 The `gh` invocations in these commands are that kind of illustrated default — the profile declares

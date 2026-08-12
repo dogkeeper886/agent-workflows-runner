@@ -20,7 +20,7 @@ Target: the docs/tests/ scenarios (all, or one named file).
 
 ## PURPOSE
 
-The paired review for `/qw-bind`, and the qa-workflow's one gate: binding is
+The paired review for `/qa-bind`, and the qa-workflow's one gate: binding is
 audit-not-codegen, so something has to *check* that the markdown and the executable
 haven't drifted apart. Divergence is silent until something looks; this looks,
 deterministically, in CI and on demand. It runs the audit and adds a human/agent pass
@@ -28,14 +28,14 @@ for meaning.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
-    (qw-run = `npm test` — the project's runner; a phase, not a slash command)
+    qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-review-bind → qa-run
+    (qa-run = `npm test` — the project's runner; a phase, not a slash command)
 
 ---
 
 ## WORKFLOW
 
-    /qw-review-bind
+    /qa-review-bind
         │
         ├─► Step 1: Run the deterministic audit
         │   The project declares which command that is — see project-profile → binding + run
@@ -72,5 +72,5 @@ first, and a section with nothing to report says so.
 - `unbound` is one of the test doc's `status` values (see the format contract).
 - A test doc's `spec` anchor is a trace for a human, not a signal this gate reads —
   resolving it would put a network call in a CI check.
-- Review paired with the producer `/qw-bind`.
+- Review paired with the producer `/qa-bind`.
 ```
