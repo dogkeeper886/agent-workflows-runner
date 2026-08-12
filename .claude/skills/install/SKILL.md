@@ -66,7 +66,7 @@ Prompt the user with detected defaults:
    - Conditional: `log-collector.ts` (Docker), `mcp-client.ts` (MCP)
    - Skills: `ci-testcase`, `ci-run`, `add-tool`, `agent-runner-flow` (to `.claude/skills/`)
    - Rules: `test-yaml-format.md`, `workflow-patterns.md` (to `.claude/rules/`)
-   - Examples: test case YAML files (if selected)
+   - Examples: test case YAML files from `templates/testcases/<suite>/` (if selected)
    - Scripts: `format-results.sh`
 
 3. **Adapt config.ts** — replace placeholder values with user's answers:
