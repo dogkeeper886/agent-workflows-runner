@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "agent-workflows-runner",
-      "description": "The whole QA lifecycle as slash commands: qw-plan and qw-cases author test docs, qw-bind binds each case to the executable that runs it, and qw-review-bind audits the pair for divergence. Each producer is paired with a review gate; every project-specific value resolves from that project's .claude/rules/project-profile.md. Requires the agent-workflows plugin for the shared report and profile-doctrine rules.",
+      "description": "The whole QA lifecycle as slash commands: qa-plan and qa-cases author test docs, qa-bind binds each case to the executable that runs it, and qa-review-bind audits the pair for divergence. Each producer is paired with a review gate; every project-specific value resolves from that project's .claude/rules/project-profile.md. Requires the agent-workflows plugin for the shared report and profile-doctrine rules.",
       "source": "./plugins/agent-workflows-runner",
       "category": "workflow",
       "homepage": "https://github.com/dogkeeper886/agent-workflows-runner"

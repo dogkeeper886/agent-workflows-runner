@@ -23,18 +23,18 @@ Target: the spec issue the tests exist for, or an ad-hoc request ("write a test 
 The front of the qa-workflow — the test analogue of reading a spec before
 implementing. It produces a short list of **scenarios** (each a TS-to-be) that together
 cover the need, and **persists them as a `[#<spec>] Test Plan` GitHub issue** so the plan
-survives the session and `qw-review-plan` reviews a real artifact (not a chat message);
-`qw-cases` then writes against it. See `qa-workflow.md`.
+survives the session and `qa-review-plan` reviews a real artifact (not a chat message);
+`qa-cases` then writes against it. See `qa-workflow.md`.
 
 Fits in the qa-workflow:
 
-    qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
+    qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-review-bind → qa-run
 
 ---
 
 ## WORKFLOW
 
-    /qw-plan 76
+    /qa-plan 76
         │
         ├─► Step 1: Read the need
         │   - If a spec issue: read it (the problem, the stories, what success looks like):
@@ -53,7 +53,7 @@ Fits in the qa-workflow:
         ├─► Step 3: Propose scenarios
         │   - Break the need into scenarios (TS-to-be), each:
         │     • one coherent slice of behaviour, • independently runnable,
-        │     • mappable to one or more of the project's executables (bound later, by qw-bind).
+        │     • mappable to one or more of the project's executables (bound later, by qa-bind).
         │   - For each, name the cases (TC-to-be) it will hold, at a sentence each.
         │
         ├─► Step 4: Open the test-plan issue
@@ -65,8 +65,8 @@ Fits in the qa-workflow:
         │       gh issue create --label "test-plan" --title "[#<spec>] Test Plan" --body "…"
         │
         └─► Step 5: Hand off — stop for review
-            - Show the test-plan issue URL for `/qw-review-plan`, then `/qw-cases`.
-            - STOP. Do NOT write TS docs — that is `/qw-cases`.
+            - Show the test-plan issue URL for `/qa-review-plan`, then `/qa-cases`.
+            - STOP. Do NOT write TS docs — that is `/qa-cases`.
 
 ---
 
@@ -92,10 +92,10 @@ The test-plan issue. Trace carries its URL; Next is the paired review. Reported 
 
 ## API Notes
 
-- A scenario here is a *plan item*, not yet a file — `qw-cases` writes the doc.
+- A scenario here is a *plan item*, not yet a file — `qa-cases` writes the doc.
 - The scenarios persist as a `[#<spec>] Test Plan` issue (label `test-plan`; ad-hoc →
   `Test Plan: <subject>`) — the same plan-as-issue form `dev-workflow` uses, with its own
   `test-plan` label so it never collides with dev's plan issues (label `plan`).
 - The spec is the goal; keep the plan to coverage, not step detail.
-- Producer paired with `/qw-review-plan`, which reviews the issue.
+- Producer paired with `/qa-review-plan`, which reviews the issue.
 ```

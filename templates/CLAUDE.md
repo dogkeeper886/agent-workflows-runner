@@ -67,7 +67,7 @@ human decision (commands suggest the next, they never auto-run it).
 
 These pipelines are **plugins you install** — nothing here ships them, and none of their
 commands exist in this project until you do. `agent-workflows` carries the dev and doc
-pipelines; `agent-workflows-runner` carries the `qw-*` QA lifecycle and requires it:
+pipelines; `agent-workflows-runner` carries the `qa-*` QA lifecycle and requires it:
 
 ```bash
 /plugin marketplace add dogkeeper886/agent-workflows
@@ -88,7 +88,7 @@ dw-story → dw-review-story → dw-plan → [human reviews the plan issue]
 **qa-workflow** — a spec into trustworthy tests:
 
 ```
-qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
+qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-review-bind → qa-run
 ```
 
 **doc-workflow** — a codebase into its README:
@@ -100,8 +100,8 @@ doc-gen-readme → doc-review-readme → [human reviews] → PR
 Each flow and its producer→review pairing live in the rules of the plugin that ships it —
 `rules/dev-workflow.md` and `rules/doc-workflow.md` in `agent-workflows`,
 `rules/qa-workflow.md` in `agent-workflows-runner`. Trivial work skips the plan:
-`dw-story → dw-tasks`. `qw-run` is `npm test`, a phase rather than a command, and
-`qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is the one gate — it
+`dw-story → dw-tasks`. `qa-run` is `npm test`, a phase rather than a command, and
+`qa-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is the one gate — it
 exits non-zero, so wire it into CI if you want it to fail a build.
 
 Two review gates are external skills these plugins do not own — invoke them by hand:

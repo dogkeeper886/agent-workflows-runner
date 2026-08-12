@@ -68,13 +68,13 @@ human decision (commands suggest the next, they never auto-run it).
 **qa-workflow** is the lifecycle this repo owns — turning a spec into trustworthy tests:
 
 ```
-qw-plan → qw-review-plan → qw-cases → qw-review-cases → qw-bind → qw-review-bind → qw-run
+qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-review-bind → qa-run
 ```
 
 The commands ship as **this repo's own plugin** (`plugins/agent-workflows-runner/`) —
 install it rather than copying the directory; the full flow + pairing lives in its
-`rules/qa-workflow.md`. `qw-run` is `npm test`, a phase rather than a command, and
-`qw-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is its one gate — it
+`rules/qa-workflow.md`. `qa-run` is `npm test`, a phase rather than a command, and
+`qa-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is its one gate — it
 exits non-zero, though no CI job wires it up yet.
 
 **The dev and doc pipelines come from the upstream `agent-workflows` plugin.** This repo
@@ -91,7 +91,7 @@ doc-gen-readme → doc-review-readme → [human reviews] → PR
 
 Each flow and its producer→review pairing live in that plugin's `rules/dev-workflow.md`
 and `rules/doc-workflow.md`. Trivial work skips the plan: `dw-story → dw-tasks`. The issue
-tracker is shared with the QA lifecycle — one issue gets both `dw-*` (the code) and `qw-*`
+tracker is shared with the QA lifecycle — one issue gets both `dw-*` (the code) and `qa-*`
 (the tests), which anchor their docs to it by number.
 
 `dw-test-design` (after `dw-implement`, before `dw-create-pr` — it writes the tests) is
@@ -149,7 +149,8 @@ See `docs/agents/triage-labels.md`.
 ### Domain docs
 
 Single-context: `CONTEXT.md` + `docs/adr/` at the repo root, created lazily when a term or
-decision actually resolves. `CONTEXT.md` does not exist yet; `docs/adr/` holds ADR-0001.
+decision actually resolves. `CONTEXT.md` does not exist yet; `docs/adr/` holds ADR-0001
+and ADR-0002.
 See `docs/agents/domain.md`.
 
 ---
