@@ -15,7 +15,7 @@ the right-hand column; it is also the answer to "can I delete this one?"
 | ID schemes | `qa-plan`, `qa-cases`, `qa-bind` |
 | Front-matter & format contract | `qa-cases`, `qa-review-cases`, `qa-review-bind` |
 | Connected flow | `qa-bind`, `qa-review-bind` |
-| Binding + run layer | `qa-bind`, `qa-review-bind` |
+| This project's binding + run layer | `qa-bind`, `qa-review-bind` |
 
 **`Paths` is shared in practice.** Other plugins write their own lines into the same section — a
 stories directory, a diagrams directory. Add the test-doc lines in place and leave every other
@@ -126,7 +126,7 @@ creates a fixture; this section is filled in then.
 An empty placeholder block reads as a flow nobody described. One honest line reads as a flow
 that does not exist yet, which is the true state and the one a reviewer can act on.
 
-### Binding + run layer
+### This project's binding + run layer
 
 The concrete commands behind the `qa-*` units' stated intent. **Worth asking about** — the gate
 resolves the audit command from here, so a wrong value fails CI rather than the thing it was
