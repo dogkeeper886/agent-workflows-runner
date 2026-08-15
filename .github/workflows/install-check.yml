@@ -1,0 +1,38 @@
+name: Install Check
+
+# Maintainer-only: proves `make install` produces a project that RUNS, not one that
+# merely exists. Deliberately NOT copied into adopting projects — a target has no
+# Makefile install to check (see the Makefile's workflow copy step).
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    paths:
+      - "Makefile"
+      - "cicd/tests/**"
+      - "templates/**"
+      - ".github/workflows/install-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Makefile"
+      - "cicd/tests/**"
+      - "templates/**"
+
+jobs:
+  install-check:
+    name: Install Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install into a throwaway project and run it
+        run: make check-install
