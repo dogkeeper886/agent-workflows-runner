@@ -64,7 +64,7 @@ Prompt the user with detected defaults:
    - Reporters: `reporter/console.ts`, `reporter/json.ts`, `reporter/index.ts`
    - Supporting: `package.json`, `tsconfig.json`
    - Conditional: `log-collector.ts` (Docker), `mcp-client.ts` (MCP)
-   - Skills: `ci-testcase`, `ci-run`, `add-tool`, `agent-runner-flow` (to `.claude/skills/`)
+   - Skills: `ci-testcase`, `ci-run`, `add-tool` (to `.claude/skills/`)
    - Rules: `test-yaml-format.md`, `workflow-patterns.md` (to `.claude/rules/`)
    - Examples: test case YAML files from `templates/testcases/<suite>/` (if selected)
    - Scripts: `format-results.sh`
@@ -99,6 +99,9 @@ Show the user:
   - Customize error patterns: `cicd/tests/src/config.ts`
   - Run tests: `cd cicd/tests && npm test`
   - Generate test cases: `/ci-testcase`
+  - Install the `agent-workflows-runner` plugin for the `qa-*` lifecycle and the
+    connected-flow design rules the executables must follow — they ship there, not here,
+    then run `/setup-agent-runner` to adopt it into this project
 
 ---
 

@@ -73,7 +73,10 @@ qa-plan → qa-review-plan → qa-cases → qa-review-cases → qa-bind → qa-r
 
 The commands ship as **this repo's own plugin** (`plugins/agent-workflows-runner/`) —
 install it rather than copying the directory; the full flow + pairing lives in its
-`rules/qa-workflow.md`. `qa-run` is `npm test`, a phase rather than a command, and
+`rules/qa-workflow.md`, and how the bound executables must be *designed* — one connected
+flow, no hardcoded IDs, fixtures torn down — in its `rules/connected-flow.md`. Its
+`setup-agent-runner` skill adopts the plugin into a repo: the profile sections the `qa-*`
+units read, the two prerequisites, and any forked copy of a unit it ships. `qa-run` is `npm test`, a phase rather than a command, and
 `qa-review-bind`'s audit (`npm --prefix cicd/tests run audit-bind`) is its one gate — it
 exits non-zero, though no CI job wires it up yet.
 

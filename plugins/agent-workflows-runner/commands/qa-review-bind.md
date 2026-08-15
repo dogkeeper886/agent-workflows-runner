@@ -4,6 +4,7 @@
 
 Doctrine — the same in every project, and travels with these units:
 @${CLAUDE_PLUGIN_ROOT}/rules/qa-workflow.md
+@${CLAUDE_PLUGIN_ROOT}/rules/connected-flow.md
 
 Doctrine from the prerequisite `agent-workflows` plugin, cited by name because no cross-plugin
 path resolves: `agent-report` (how a reply reports back) and `profile-doctrine` (how a unit
@@ -40,6 +41,10 @@ Fits in the qa-workflow:
         ├─► Step 1: Run the deterministic audit
         │   The project declares which command that is — see project-profile → binding + run
         │   layer. Here: `npm --prefix cicd/tests run audit-bind`.
+        │   If that command does not exist, stop and say so as the prerequisite it is —
+        │   this project has no bound-test tooling; the framework is installed per project
+        │   (see qa-workflow → Prerequisites). Do not report a missing script as an audit
+        │   failure: nothing was audited.
         │   For each case it checks:
         │     - the `Script:` path resolves to a file, and
         │     - the doc's step count matches the executable's step count.
@@ -51,10 +56,19 @@ Fits in the qa-workflow:
         │   still describe what the executable actually does — structure can match while
         │   meaning has drifted. Flag any semantic mismatch.
         │
+        ├─► Step 2b: Read the design the audit can't
+        │   Check each bound executable against `connected-flow`: hardcoded instance IDs,
+        │   a test that bootstraps its own parent objects, a fixture named with a random
+        │   or timestamp suffix, an entity linked to nothing, a fixture with no teardown.
+        │   Each is a REVISE on a case the audit reports `bound` — it counts steps, and
+        │   none of these change a step count.
+        │
         └─► Step 3: Decision
-            - PASS: every case `bound` (audit exits 0) and meaning holds.
+            - PASS: every case `bound` (audit exits 0), meaning holds, and the
+              executables follow `connected-flow`.
             - REVISE: for each `UNBOUND` (or semantic mismatch), fix the doc's
               Steps/`Script:` or the binding — smallest change first — then re-run.
+              A `connected-flow` violation is a fix to the executable, not the doc.
 
 ---
 
@@ -68,7 +82,7 @@ first, and a section with nothing to report says so.
 ## API Notes
 
 - The audit is structural + deterministic, and exits non-zero — the runnable check a CI job
-  can gate on. Semantic agreement is the reviewer's job.
+  can gate on. Semantic agreement and `connected-flow` design are the reviewer's job.
 - `unbound` is one of the test doc's `status` values (see the format contract).
 - A test doc's `spec` anchor is a trace for a human, not a signal this gate reads —
   resolving it would put a network call in a CI check.

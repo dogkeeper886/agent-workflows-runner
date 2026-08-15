@@ -45,7 +45,8 @@ No producer ships without a review covering its output.
 
 - **Owns:** the whole lifecycle — the authoring flow, the `docs/tests/` test-doc format (the
   contract), the binding, the binding audit (the one gate that fails on a doc and its executable
-  diverging), and running the suite. Nothing here is deferred to somebody else's layer.
+  diverging), how the bound executables are designed (`connected-flow.md`), and running the
+  suite. Nothing here is deferred to somebody else's layer.
 - **Resolves from the profile:** which command runs the suite and which runs the audit. The
   lifecycle is owned; the concrete invocations are project values.
 - **Optional:** reusing vetted steps via a search index — a project enhancement, not part of the
@@ -64,12 +65,30 @@ So nothing here automatically notices when intent moves underneath a test doc. T
 catches a doc diverging from its **executable**, which is a different failure. Read the trace
 yourself when the spec changes.
 
-## Prerequisite
+## Prerequisites
 
-These commands cite two rules that ship in the **`agent-workflows`** plugin — `agent-report.md`
+There are two, and neither is expressible as a plugin dependency — Claude Code has no such
+declaration, so both are the adopter's to satisfy. `setup-agent-runner` checks for both.
+
+**The `agent-workflows` plugin.** These commands cite two of its rules — `agent-report.md`
 (how a reply reports back) and `profile-doctrine.md` (how a unit resolves a project value).
-Claude Code cannot express a dependency between plugins, so install that one too; the README's
-install steps name it.
+Install it too; the README's install steps name it.
+
+**The test framework itself, in the project.** `qa-bind` and `qa-review-bind` shell out to
+project-side scripts — the scaffolder and the audit — and this plugin ships neither. They
+arrive when the runner is installed into the repo being tested: `make install TARGET=<project>`
+from the `agent-workflows-runner` checkout, or its agent-driven `/install` skill. Which scripts
+they are afterwards is a project value: `project-profile.md` → binding + run layer.
+
+The two differ in *scale*, which is why one can be satisfied while the other is not: the
+plugin is installed **once per user** and reaches every repo that user opens; the framework is
+installed **once per project** and reaches only that one. A user with the plugin still meets a
+missing script in the next repo they open.
+
+A unit that shells out to a script the profile names **checks it resolves first** and stops
+with what is actually wrong — this project has no bound-test tooling, install the framework —
+rather than passing an `npm ERR! Missing script` up to someone who was told the prerequisites
+were satisfied.
 
 ## Project-specific values
 
