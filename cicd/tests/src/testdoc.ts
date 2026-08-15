@@ -20,7 +20,7 @@ export interface Scenario {
 }
 
 /** Parse `key: value` front-matter between the first pair of `---` fences. */
-export function parseFrontMatter(md: string): Record<string, string> {
+function parseFrontMatter(md: string): Record<string, string> {
   const m = md.match(/^---\n([\s\S]*?)\n---/);
   const fm: Record<string, string> = {};
   if (!m) return fm;
@@ -51,7 +51,7 @@ export function scenarioFiles(dir: string): string[] {
 }
 
 /** Parse a scenario file into its front-matter and cases (each with its steps). */
-export function parseScenario(md: string): Scenario {
+function parseScenario(md: string): Scenario {
   const frontMatter = parseFrontMatter(md);
   const cases: TestCase[] = [];
 
@@ -90,16 +90,3 @@ export function readScenario(file: string): Scenario {
   return parseScenario(readFileSync(file, 'utf8'));
 }
 
-/** The searchable step text for one row: "Action — Expected" (or just Action). */
-export function stepText(s: { action: string; expected: string }): string {
-  return s.expected && s.expected !== '—' ? `${s.action} — ${s.expected}` : s.action;
-}
-
-/**
- * The searchable text for a case-level row: its title and objective — *what the
- * case verifies*, the level an agent searches by. Falls back to the title alone
- * when a case has no objective.
- */
-export function caseText(c: { title: string; objective: string | null }): string {
-  return c.objective ? `${c.title} — ${c.objective}` : c.title;
-}

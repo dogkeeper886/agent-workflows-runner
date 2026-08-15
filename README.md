@@ -90,6 +90,7 @@ Other Makefile targets:
 make help                              # show usage
 make clean TARGET=/path/to/project     # remove the framework from a project
 make diagrams                          # re-render docs/diagrams/*.svg → png/
+make check-install                     # install into a temp dir and run it — proves the payload works
 ```
 
 **Agent-driven alternative.** In your project, tell Claude Code `/install /path/to/agent-workflows-runner` (or "Install the test framework from …"). The agent detects your project type, asks a few configuration questions, and installs only what you need with values pre-filled.
@@ -382,6 +383,7 @@ your-project/
 │   │   │   ├── build/           # ← your tests
 │   │   │   ├── integration/
 │   │   │   └── e2e/
+│   │   ├── scripts/             # mock MCP server + the check:* guards
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   ├── scripts/
