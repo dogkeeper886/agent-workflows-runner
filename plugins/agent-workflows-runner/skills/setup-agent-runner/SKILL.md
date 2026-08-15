@@ -37,7 +37,8 @@ bind here: own only what you read, add or update in place and never truncate, an
 already there as a decision rather than something to overwrite.
 
 The sections this plugin owns, and nothing else:
-**Paths · ID schemes · Front-matter & format contract · Connected flow · Binding + run layer.**
+**Paths · ID schemes · Front-matter & format contract · Connected flow · This project's binding
++ run layer.**
 See [profile-sections.md](./profile-sections.md).
 
 If `agent-workflows` is also placed, its sections — Labels, Linking & branch, Platform, Git,
