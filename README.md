@@ -312,13 +312,17 @@ The tooling splits three ways — a **plugin you install**, skills **copied into
 The commands that turn a spec into trustworthy tests ship as a Claude Code plugin, from this repo's own marketplace. Installing beats copying: a plugin update moves every project at once, where a copied `.claude/` directory leaves each repo on its own fork.
 
 ```bash
-# Prerequisite: agent-workflows, whose agent-report and profile-doctrine rules
+# Prerequisite 1: agent-workflows, whose agent-report and profile-doctrine rules
 # the qa-* commands cite. Claude Code can't express a dependency between plugins.
 /plugin marketplace add dogkeeper886/agent-workflows
 /plugin install agent-workflows@agent-workflows
 
 /plugin marketplace add dogkeeper886/agent-workflows-runner
 /plugin install agent-workflows-runner@agent-workflows-runner
+
+# Prerequisite 2: the framework itself, in your project — qa-bind and qa-review-bind
+# shell out to its scripts (make install, above). Then adopt the plugin into the repo:
+/setup-agent-runner
 ```
 
 | Producer → review | What the pair covers |
@@ -328,6 +332,8 @@ The commands that turn a spec into trustworthy tests ship as a Claude Code plugi
 | `/qa-bind` → `/qa-review-bind` | each case bound to the YAML that runs it — the audit is the gate, exiting non-zero for CI |
 
 No producer ships without its review. Project-specific values — paths, labels, id schemes — resolve from your `.claude/rules/project-profile.md`, never from the commands.
+
+The plugin also carries **`connected-flow`**, the design rules a bound executable must follow: one connected end-to-end flow, no hardcoded instance IDs, stable-named fixtures created idempotently and torn down at the end. `qa-bind` and `qa-review-bind` load it, because the binding audit is structural — it counts steps, and none of those violations changes a step count. `/setup-agent-runner` writes your project's instantiation of the rules into the profile, checks both prerequisites, and finds forked copies of the units an earlier install left behind.
 
 ### Shipped into your project by `/install`
 
@@ -339,7 +345,6 @@ AI-assisted test authoring:
 | `/ci-testcase` | generate YAML test cases from requirements |
 | `/ci-run` | execute tests with guided output |
 | `/add-tool` | add new MCP tools following standard patterns |
-| `agent-runner-flow` | integration-test design rules — one connected, self-contained end-to-end flow |
 
 **Maintainer tooling** — the workflow this repo is built with (see `CLAUDE.md` §5–6). Most of it is installed, not carried here:
 
@@ -361,7 +366,7 @@ What `make install` lays down in your project:
 your-project/
 ├── CLAUDE.md                    # AI agent guidance
 ├── .claude/
-│   ├── skills/                  # /ci-testcase, /ci-run, /add-tool, agent-runner-flow
+│   ├── skills/                  # /ci-testcase, /ci-run, /add-tool
 │   └── rules/                   # YAML schema + CI workflow patterns
 ├── cicd/
 │   ├── tests/

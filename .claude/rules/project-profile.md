@@ -107,6 +107,15 @@ why — is `.claude/rules/agent-report.md`; a unit resolves the wording from her
   (`planning-…`, `drafting-…`)
 - audience (human-read docs): engineers and newcomers
 
+## Connected flow
+
+How this project instantiates the portable rules in the plugin's `rules/connected-flow.md`.
+
+Not instantiated. This repo's own suite is a single standalone case (`TC-INT-MCP-001`, which
+runs against a bundled mock server) plus the standalone examples under `templates/testcases/`,
+so there is no hand-off, no fixture chain and no teardown stage yet. The rules bind the first
+executable that creates a fixture; this section is filled in then.
+
 ## This project's binding + run layer
 
 The `qa-*` commands state the intent; these are the concrete commands behind it here:
