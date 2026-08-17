@@ -43,7 +43,13 @@ this and is the route to prefer where it is installed; where it is not, do the s
 and say that is what happened. If key points were already produced in this session, reuse
 them rather than studying twice.
 
-**Do not derive key points from the test names.** They describe what someone chose to test,
+Check what came back before using it. A key point that describes structure rather than
+naming a behaviour — *"rules are rows read once at startup"* — yields a matrix row nothing
+can ever fill. Ask for it again as something a test could cover, and ask whether any
+behaviour was explained only inside another point's mechanism: absorbed like that it is
+indistinguishable from one never found, and the row will simply be missing.
+
+Do not derive key points from the test names. They describe what someone chose to test,
 which is the thing under examination. Deriving the standard from the subject makes any suite
 look complete.
 
@@ -53,7 +59,7 @@ look complete.
 mock every dependency contains no integration tests, and the name is what made that
 invisible.
 
-**Find the tests the way the project runs them.** Take the set from what its own runner
+Find the tests the way the project runs them. Take the set from what its own runner
 collects — the test script in its manifest, the include globs in its test config — not from
 whichever directory looks like it holds tests. A file that could not be classified is
 reported as unread; it is never counted as absent, because an empty cell and an unread file
@@ -69,12 +75,12 @@ Then read each test and answer one question: what real thing does it reach?
 | System integration | the system plus real external services | yes |
 | Acceptance | the delivered thing, as a user or operator meets it | yes |
 
-**Why the first two do not count.** They are allowed to exist — but a component test asserts
+Why the first two do not count. They are allowed to exist — but a component test asserts
 today's internal structure, so when the structure changes for a good reason the test fails
 for no reason, and the change is what gets questioned. It is a restriction written down. It
 answers "did I break this refactor", never "does the system work".
 
-**Level is only half the filter. The other half is relevance:** a test counts only if it
+Level is only half the filter. The other half is relevance: a test counts only if it
 reaches a key point. A system-level test exercising something on nobody's list fills no cell.
 
 ## 3. Build the matrix
@@ -89,7 +95,7 @@ the work:
    system-int      ·      ·      ·      ·          ·
    acceptance      ·      ·      ·      ·          ·
    ───────────────────────────────────────────────────────
-   behind a fake   225 tests land here, in one column
+   behind a fake   every test can land here, in one column
 ```
 
 The last row is not a footnote. Seeing every test in it at once is usually the finding.
@@ -103,8 +109,8 @@ worth more than an inferred one. Quote it.
 Say what passing proves. Then say what it does not. Then name **one** gap as the first worth
 closing.
 
-A percentage is what let a suite of 225 tests read as protection. Never produce one, and
-never accept one as an answer.
+A percentage is what lets a large suite read as protection. Never produce one, and never
+accept one as an answer.
 
 Three findings that recur, each worth naming when it appears:
 
@@ -141,7 +147,8 @@ lands, and that the id it answers with is the id a read answers to*. Those two w
 the two untested.
 
 Verdict: **the suite proves the code agrees with fakes the same author wrote.** It does not
-prove a write reaches TestLink. First gap: the acceptance pair the README already names.
+prove a write reaches the real system. First gap: the acceptance pair the README already
+names.
 
 ## Steps
 
@@ -159,9 +166,24 @@ Copy this checklist and tick each item as you finish it:
 
 ## Report
 
-Two lines and a question:
+**Two readers, two shapes.** A skill or a script that called this one cannot answer a
+question, so a matrix held back from it is a matrix lost:
 
-    REVIEWED — 225 tests, every one behind a fake. Nothing proves a write reaches TestLink.
+| Who asked | What they get |
+|---|---|
+| A person | two lines and a question; the matrix held until they ask |
+| Another skill, or a caller that is not a reader | the whole matrix, the per-test classification and the findings, with no offer and nothing held |
+
+The same rule binds this skill as a *caller*. Asking `analysis-sut` for key points, say up
+front that this is a call rather than a reader, so the full list comes back with nothing
+held — and where the study is delegated to a subagent, pass the rules with the method: it
+writes no file, the docs stay shut until the model is derived, and the result says which it
+held. Rules that do not travel with the work are rules nobody can report on.
+
+For a person, two lines and a question:
+
+    REVIEWED — 225 tests, every one behind a fake. Nothing proves a write reaches the
+    real backend.
     Next: close the acceptance pair the README already names.
     Want the matrix?
 

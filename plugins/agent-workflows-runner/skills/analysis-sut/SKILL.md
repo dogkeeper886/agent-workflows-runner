@@ -78,36 +78,79 @@ them.
 A longer list is an index, and an index is what a reader skips. Shortening is how the count
 comes down — never by dropping a diagram from a key point that stays.
 
-## 4. One ASCII diagram per key point
+**And never by folding one into #1.** #1 states the organizing idea and carries no other key
+point's mechanism. A behaviour absorbed into it keeps its words, loses its rank and its
+drawing, and cannot be told apart from one never found. Step 4 is where that is caught and
+what to do about it.
 
-Every key point gets one. #1 included: it is the organizing idea, so it is the diagram the reader
-needs most.
+Prefer a behaviour to a description. *"Rules are rows read once at startup"* describes
+structure; *"three refusals, one per stage — schema, rules, the call itself"* names something
+a test either covers or does not. This list is what coverage is measured against, so a
+descriptive key point yields a row nothing can ever fill.
 
-Draw the real mechanism with real names from the code. Boxes labelled *service* and
-*database* describe every system ever built and this one not at all.
+## 4. Settle the list, then draw it
 
-**Count check: diagrams drawn == key points on the list.** If there are fewer, either draw the
-rest or shorten the list.
+**Ask this before drawing anything: is any behaviour explained only inside another key
+point's mechanism?**
+
+A yes means it is a key point. Promote it, and take step 3's route out of the cap — demote
+the weakest, or go to five and say why the list is five. Then ask again over the new list,
+until the answer is no. Only then count.
+
+Reaching the cap is not an answer to this question. The cap is what causes it: a behaviour
+found after four are ranked has nowhere to go, and folding it into #1 leaves the count
+passing and the point gone.
+
+Then draw. One ASCII diagram per key point, #1 included — it is the organizing idea, so it is
+the diagram the reader needs most. Draw the real mechanism with real names from the code:
+boxes labelled *service* and *database* describe every system ever built and this one not at
+all.
+
+Count check: diagrams drawn == key points on the settled list. If there are fewer, either
+draw the rest or shorten the list.
+
+Keep a diagram inside 80 columns. It is read in a terminal, and one that wraps is one nobody
+reads.
 
 ## 5. Then read the docs, and only to contradict
 
-With the model already derived, read the README, the architecture records, the comments, the
-example config. Report every claim the code does not support: a table that does not exist, a
-command that would fail, a route never defined, a described mechanism that was replaced.
+With the model already derived, read the prose files — README, architecture records, example
+config, anything under a docs directory. Report every claim the code does not support: a
+table that does not exist, a command that would fail, a route never defined, a described
+mechanism that was replaced.
+
+*Docs* here means those files. Comments inside source are read in step 1 along with the code
+they sit in; deferring them would mean reading the same file twice.
+
+This pass belongs to whoever read the code, which under step 6 is the subagent. Handing it
+back to the caller means the caller reads the docs and the code both, and the delegation
+bought nothing.
 
 This costs almost nothing once the code has been read, and it is often the most valuable
 thing returned — the contradictions are invisible to everyone who trusts the document.
 
 ## 6. Study in the background
 
-Spawn a subagent for the reading and take back only the list.
+Spawn one subagent for the reading and take back its whole result.
 
 Studying a repo means opening entry points, manifests, schemas, routes and config. All of
 that lands in context and none of it is the answer. A subagent spends its own context and
 returns the conclusion. Where no subagent is available, do it inline — the method does not
-change, only the cost.
+change, only the cost. One subagent, not several: step 2 requires #1 to be found before
+anything is enumerated, and parallel studies each find a different #1.
 
-Give the subagent the method above, the target path, and the focus if one was supplied.
+**Hand over the constraints, not only the method.** A subagent given the steps and nothing
+else is not bound by the rules those steps exist to serve — it may write a scratch file, or
+open the docs first, and the reply will say neither. Pass, explicitly:
+
+- the target path, absolute, and the focus if one was supplied
+- steps 1 to 5, in order
+- **it writes no file anywhere** (step 7), and must say so in its result
+- the docs stay shut until step 5
+- the count check, and the absorption question beside it
+
+Then require the result to state which of those it held. A rule nobody was asked about is a
+rule nobody can report on.
 
 ## 7. It writes no file
 
@@ -130,14 +173,24 @@ Copy this checklist and tick each item as you finish it:
     - [ ] Ground truth read first; docs untouched until step 5
     - [ ] #1 identified before any feature was listed
     - [ ] List ranked, four key points at most
-    - [ ] One ASCII diagram per key point — count matches
+    - [ ] No behaviour explained only inside another key point's mechanism
+    - [ ] One ASCII diagram per key point — count matches, each inside 80 columns
     - [ ] Mechanism written in the code's own names, not generic ones
-    - [ ] Docs read last, contradictions reported or "none found"
+    - [ ] Contradictions reported, or "none found"
+    - [ ] Constraints handed to the subagent, and it reported which it held
     - [ ] No file written anywhere
 
 ## Report
 
-Two lines and a question:
+**Two readers, two shapes.** A skill that called this one cannot answer a question, so a
+payload held back from it is a payload lost:
+
+| Who asked | What they get |
+|---|---|
+| A person | two lines and a question; the list held until they ask |
+| Another skill, or a subagent's caller | the whole list — every field, every diagram, the contradictions — returned with no offer and nothing held |
+
+For a person, two lines and a question:
 
     STUDIED — 4 key points, #1 the validation gate on the only path out.
     11 places the docs contradict the code.
