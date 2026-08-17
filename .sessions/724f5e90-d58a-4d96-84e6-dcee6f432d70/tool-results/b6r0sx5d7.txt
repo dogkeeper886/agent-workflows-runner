@@ -1,0 +1,523 @@
+=== 0001-validation-is-outside-the-agent-trust-boundary.md ===
+# Validation is outside the agent's trust boundary
+
+The agent that generates test cases cannot reliably validate them at scenario
+level, so validation is split into a separate service the generating agent
+reaches only over HTTP. Rules are baked into the deployed image rather than read
+from a mounted path, and there is no rule-reload endpoint — the agent has no
+mechanism by which it could relax a rule that keeps rejecting it.
+
+## Consequences
+
+Rule changes require a rebuild and redeploy performed outside the generation
+workflow. This is deliberate friction: a rule set the generating side can edit
+is not a boundary.
+=== 0002-detection-is-deterministic.md ===
+# Detection is deterministic; the model never decides a violation
+
+Every violation is produced by literal term or symbol matching, not by a language
+model. A local model is used offline to survey the corpus and surface candidate
+rules a human then writes; once written, that rule is deterministic forever and
+the model has no further part in it.
+
+## Considered Options
+
+Running fields through a local model in the request path was the obvious reading
+of "validation with Ollama" and was rejected. The API sits in a write path and
+returns rejections an agent must act on, which requires verdicts that are
+identical across runs and explainable to the person whose test case was refused.
+A 9B model gives neither.
+
+## Consequences
+
+The model's role shrinks over time rather than growing — each rule promoted from
+survey to rule set is one less thing needing inference. Detection classes that
+cannot be expressed as literal matching (duplication, ambiguity, unstated
+preconditions) are out of scope until a deterministic expression is found.
+=== 0003-agent-works-only-over-the-api.md ===
+# The generating agent works only over the API, never local files
+
+The agent that creates test cases reads existing cases and reference documents
+through this API, not from markdown or any other file on disk. It has no local
+working copy of the corpus.
+
+## Considered Options
+
+Letting the agent keep local markdown was the obvious approach and was rejected.
+Agents corrupt structured markdown reliably enough that skills and rules do not
+prevent it, and a local copy is also a second source of truth that drifts from
+TestLink. Serving everything over the API keeps one source of truth and leaves
+the agent with no file it can quietly rewrite.
+
+## Consequences
+
+Reference documents must be reachable through the API, so document serving is in
+scope for this project even though it is not validation. The read path becomes
+the only channel by which the agent sees existing content, which makes it the
+place where legacy fingerprints would otherwise propagate into new cases.
+=== 0004-rule-sets-live-in-a-database.md ===
+# Rule sets live in a database, read once at startup
+
+Rule sets move out of YAML files and into a database. Only the store changes:
+they are still read once when the server starts and never reloaded, so a running
+server judges every test case by the rule sets it started with.
+
+The database is not scoped to rule sets, and this ADR does not fix its scope.
+The maintainer's framing is that it is where strictly validated content lands,
+and that it may later become the source of truth imported into production
+TestLink, or a cache in front of it. Those are open. What is settled here is that
+rule sets are among the things it holds.
+
+## Considered Options
+
+**Files, kept in version control.** Argued for on the grounds that version
+control already gives history, review before a rule can reject anything,
+one-command rollback, and a rule set version derived from the text as supplied.
+Rejected by the maintainer. The store this project already reaches for is a
+server rather than a working copy — TestLink replaced the local test case
+markdown files for the same reason — and the file argument answers for one rule
+set at a time, where the pressure comes from many of them copied and tweaked from
+each other.
+
+## Consequences
+
+**ADR-0001 no longer describes the store accurately.** It says rules are "baked
+into the deployed image rather than read from a mounted path". Neither half will
+be true. The property that ADR-0001 exists to protect survives unchanged: rule
+sets are read once at startup, there is no reload endpoint, and the generating
+agent reaches the server only over HTTP, so it still has no mechanism by which it
+could relax a rule that keeps rejecting it. The README already flags this tension
+as open pending deployment shape; that flag now resolves to a database.
+
+**Rule Set Version is unaffected.** It stays derived from the rule sets as
+supplied and fixed for the life of a running server, because reading once at
+startup is exactly what is being kept.
+
+**The server stops being stateless.** The README records "no storage layer... a
+database waits until a real requirement for one appears". That wait is over, and
+a component the project has so far done without now has to be run, backed up, and
+reachable from the server at startup.
+=== 0005-reference-documents-are-checked-content-in-the-database.md ===
+# Reference documents are checked content, held in the database
+
+> Partly superseded by ADR-0006. The "How content reaches the database" section
+> below, and the consequence "There is one write path, and the server is not on
+> it", are no longer how this works: there is no load command, and an operator
+> writes with SQL. Everything else here still holds. The text is left as it was
+> written, because what it records is the decision as it was taken.
+
+Reference documents live in the database ADR-0004 introduced, and they are the
+first thing to make that database real. They are composed of named fields the
+way a test case is — a title and a body — each with its own rule set, so a read
+carries the violations found in what it serves. They are read only: the API
+lists them and retrieves one, and there is no endpoint that writes one.
+
+This settles the question the README carried as open, "what the reference-document
+endpoints look like", and it fixes one part of the scope ADR-0004 deliberately
+left open.
+
+## Considered Options
+
+**Where the documents live.** A directory on the server, pointed at by an
+environment variable the way rule sets were, was argued for on the grounds that
+it ships immediately, needs no new infrastructure, and keeps the boundary that
+matters — the agent has no local files, and the server having them is exactly
+the trust boundary. Storing them in TestLink as requirement specifications was
+argued for as keeping one source of truth. Both were rejected by the maintainer
+in favour of building the ADR-0004 database now and making documents its first
+tenant: the store was already decided, and a second temporary store would have
+been a third place content lives.
+
+**Whether a read reports violations.** Serving documents straight through,
+unchecked, was argued for as the smaller change and the one that invents no
+vocabulary: a rule set was defined as the rules bound to one field of a test
+case, and a document had no fields. Rejected by the maintainer. ADR-0003's own
+reasoning applies to documents at least as strongly as to test cases — the read
+path is where legacy fingerprints propagate into new cases, and a reference
+document written in the wording the rules exist to catch is the most direct way
+for that to happen. Documents therefore gained fields so the rules could reach
+them.
+
+**Whether the agent can write a document.** Full CRUD, matching the test case
+surface, was considered and rejected. A document the agent could write is a
+document it could author in the style the rules catch and then read back as
+authority, which is the same reason ADR-0001 gives it no way to reload a rule.
+
+**How content reaches the database.** Seeding on first startup was rejected
+because it makes the server something that writes its own rules, and because
+"first startup" is a state that is easy to get wrong on a redeploy. Loading
+entirely out of band was rejected because it would leave no supported path from
+a written rule set to a running server. A load command the operator runs was
+chosen.
+
+## Consequences
+
+**Rule sets gained a level.** A rule set is now written under the content it
+checks — `testCase:` or `referenceDocument:` — because the two have different
+fields and a flat namespace would leave `title` belonging to nothing in
+particular. Existing rule set files must be re-indented under `testCase:`. The
+loader refuses a rule set naming anything else, so a file that was not migrated
+fails loudly rather than binding to nothing and never firing.
+
+**The server no longer reads a file.** Rule sets are read from the database at
+startup, which resolves the tension the README flagged against ADR-0001: there
+is no mounted path any more. Reading once at startup and never reloading is
+unchanged, and so is rule set version, which is still derived from the rule set
+text exactly as supplied.
+
+**There is one write path, and the server is not on it.** `npm run load` is the
+only thing in the project that writes to the database. The object the server
+holds exposes no write at all, so relaxing a rule or authoring a document is not
+something the running system can do, whatever reaches it over HTTP.
+
+**Rule sets are appended, not replaced.** Superseding a rule set does not destroy
+the one a running server is still judging by, so an operator can read back,
+compare or recover what was in force before a load. Nothing in the API resolves a
+version to its row — reading one back is an operator with a database client, not
+a feature — so this is history kept cheaply, not a lookup the server offers.
+
+**A document's shape is taken from its file.** The file name without its
+extension is the id a caller retrieves it by; the first line is the title,
+written as a Markdown heading; the rest is the body. Every file in the directory
+is read as a document — a file that is not one is refused by name rather than
+skipped, because a document silently left out is one the agent will never know it
+was meant to have. Names opening with a dot are the exception, being the
+operating system's rather than the operator's.
+
+**One report covers everything an operator supplied.** The load command checks
+the rule sets and the documents before writing either, and reports their problems
+together. A rule set problem must not hide a document problem, or the operator
+loads twice to find both — the same bargain the server makes at startup when it
+names every invalid rule at once.
+=== 0006-rule-sets-and-documents-are-written-with-sql.md ===
+# Rule Sets and Reference Documents are written with SQL, and the project ships no loader
+
+An operator writes Rule Sets and Reference Documents into the database with SQL,
+using whatever database client they already have. The project ships the schema
+and stops there: there is no load command, nothing read off the filesystem, and
+no template to copy. The server reads the database at startup exactly as before.
+
+This reverses the "How content reaches the database" section of ADR-0005, which
+chose a load command the operator runs. Everything else that ADR settled is
+untouched — documents are still checked content held in the database, still
+read-only over the API, still composed of a title and a body with their own Rule
+Sets.
+
+## Considered Options
+
+**A load command reading files.** What ADR-0005 chose and what this replaces. Its
+templates and its directory of documents were the thing that made the database
+concrete while the schema was being designed; the maintainer's framing is that
+they were a development intermediate whose job ended when the database became
+real, and that keeping them means the project carries two representations of the
+same Rule Sets for the rest of its life.
+
+**A write surface on the server, kept off the agent's API.** Rejected. It is the
+most usable answer for an operator without a database client, but it puts a write
+path on the process ADR-0001 exists to keep off one, and defends the property by
+network reachability rather than by the server holding an object that cannot
+write. The weaker guarantee was not worth the convenience.
+
+**Writing with SQL, out of band.** Chosen by the maintainer. ADR-0005 rejected
+this on the grounds that it leaves no supported path from a written Rule Set to a
+running server. That objection is answered rather than dismissed: the schema
+ships in the repository as `schema.sql`, the README documents the statements that
+write a Rule Set and a Reference Document, and the suite extracts and runs those
+statements against an in-process Postgres, so what is documented is what is
+tested. The path is supported; it is simply not automated.
+
+ADR-0005's other objection, to seeding on first startup, is not answered because
+it no longer applies: nothing seeds. The server gained no write, and "first
+startup" is not a state anything here behaves differently in.
+
+## Consequences
+
+**The project no longer writes to its own database, at all.** ADR-0005 recorded
+"there is one write path, and the server is not on it". There is now no write
+path in the project. What ADR-0001 protects is stronger for it, not weaker: the
+agent cannot relax a Rule that keeps rejecting it, and neither can anything this
+repository ships.
+
+**YAML stays, as the storage format.** Rule Sets are held as text in
+`rule_sets.source` and parsed at startup, which is what the load command already
+wrote and what the server already read. Removing the loader does not remove
+YAML — an operator writes YAML inside a SQL statement — so the Rule Set
+vocabulary, its checking, and the Rule Set Version derived from the text as
+supplied are all unchanged.
+
+**A Reference Document's shape is no longer taken from a file.** Its id, and its
+two Fields, were read out of a file name and a Markdown heading; an operator now
+writes all three directly. The Rules that reach a document are unchanged, and so
+is what a read reports. What goes is the file convention and the refusal of a
+file that is not a document.
+
+**Applying the schema becomes an operator's step.** The load command created the
+tables on first use. A fresh database now has none until `schema.sql` is applied,
+so the server's refusal to start has to name that step rather than a command that
+no longer exists. A database with no schema is still told apart from a database
+that is unreachable, exactly as before.
+
+**Nothing checks what an operator wrote before the server binds it.** The load
+command validated Rule Sets and documents together and reported every problem in
+one pass. Startup still refuses invalid Rule Sets and still reports every problem
+at once, so that check survives — it happens when the server starts rather than
+when the Rule Set is written. A malformed Reference Document is no longer refused
+at all: its Fields are whatever the operator wrote.
+=== 0007-a-rule-is-a-row-and-is-disabled-rather-than-deleted.md ===
+# A Rule is a row, and is disabled rather than deleted
+
+Rule Sets stop being one YAML document held as text and become rows, one per
+Rule. A Rule carries the content and the Field it binds to, which kind of check
+it is, what it looks for, the reason it gives, and a switch. An operator adds one
+Rule, or turns one off, with a single statement naming that Rule alone.
+
+Nothing is deleted. A Rule that should stop firing is disabled, and its row
+stays. What a Rule looks for is not edited either — the reason it gives is. Both
+are a discipline the schema documents and does not enforce, which is a decision
+rather than an omission: there is one operator, and a guard's value is entirely
+in who it stops.
+
+This changes only how Rule Sets are stored and edited. They are still read once
+at startup and never reloaded (ADR-0004), still written by an operator with SQL
+with nothing in the project writing (ADR-0006), and a Rule still binds to exactly
+one Field of one kind of content.
+
+## Considered Options
+
+**One YAML document, appended.** What this replaces. Its virtue is that the Rule
+Set Version falls straight out of the bytes, and that a superseded document stays
+readable because a new one is inserted beside it rather than over it. Its cost is
+that every edit is an edit to the whole thing: turning off one Rule means
+retyping every other Rule into a fresh `insert`, and a Rule Set of sixty Rules is
+a wall of text where a one-character slip in an unrelated Rule is invisible. The
+maintainer's framing is that a Rule Set is a list of independent checks and
+should be edited as one.
+
+**Rows, deleted when no longer wanted.** The obvious shape, and rejected. Every
+response names the Rule Set Version and every Violation is logged against it, so
+the system has already promised to explain a rejection after the fact. A deleted
+Rule breaks that promise silently: the log still names the Rule, and the Rule is
+not there to be read. The test cases rejected by it stay rejected and become
+unexplainable, which lands on the QA engineer who wrote them rather than on the
+operator who deleted the Rule. Delete also buys very little — a disabled Rule
+stops firing exactly as completely as a deleted one, so what is saved is table
+size, at a scale (tens of rows) no database notices.
+
+**Rows, disabled rather than deleted.** Chosen. `enabled` is both the switch and
+the tombstone, so the operator has three operations rather than four and the
+record of what once fired survives. Turning a Rule back on is one statement and
+restores the exact Rule that was there, rather than a retyped approximation of
+it.
+
+**A table per kind — one for Terms, one for Symbols.** Considered because the
+columns differ: a Symbol carries Flanking and a Term does not. Rejected. A
+Field's Rule Set is one list that mixes both, so two tables means every read is a
+union and every operation an operator performs has to start by working out which
+table the Rule is in. One table with a column naming the kind keeps the statement
+shapes identical.
+
+## Consequences
+
+**The Rule Set Version is derived from the Rules in force, not from text.** It
+was a hash of the YAML exactly as supplied; there is no longer a document to
+hash. It becomes a hash over the enabled Rules, rendered in a fixed order and
+including everything a caller was judged by — the Field, the kind, what is looked
+for, the Flanking, the reason, and the Exceptions. Disabled Rules are left out,
+because they judge nothing.
+
+What the version is for is unchanged: it names the Rules a response was produced
+by, and it cannot go on naming Rules that have since been edited. One property
+improves. Because the version comes from the Rules rather than from their
+formatting, the same Rules always produce the same version — so a Rule disabled
+and later enabled again returns the Rule Set to the version it had before, rather
+than to a new one that means the same thing. Under the old scheme, reformatting
+the YAML changed the version without changing a Rule; that no longer happens, and
+the safety argument for it no longer applies, because there is no formatting left
+to change.
+
+**What a Rule looks for cannot be edited; what it says can.** Changing `looks_for`
+or the kind of check makes it a different check under the same name, and every
+Violation already logged against that name then describes something that never
+happened. Changing the reason changes only the wording the caller is handed.
+Rewording a reason changes the Rule Set Version, which is correct: what a caller
+is told is part of what the Rules do.
+
+An operator who wants a Rule to look for something else disables it and adds
+another, which is the honest shape of that change anyway.
+
+**The discipline is not enforced, and that is decided rather than left open.**
+Everywhere else, this project has made the unwanted thing impossible rather than
+forbidden — the server holds an object with no write (ADR-0006), the agent has no
+reload endpoint (ADR-0004). This is the exception, and it is worth naming as one.
+
+The enforcing move exists: a trigger refusing a `delete` on `rules`, and refusing
+an update that touches the identity columns, naming what to do instead. Postgres
+takes it. What it cannot do is live in `schema.sql`, because the suite runs the
+shipped schema against pg-mem, and pg-mem cannot parse
+`create function ... language plpgsql` — adding the trigger makes the schema
+unrunnable there and fails thirteen tests. So enforcing it means either giving
+the suite a real Postgres, or shipping the trigger in a second file the suite
+does not run.
+
+**Chosen by the maintainer: neither. The discipline stays a discipline**, written
+in the schema's comments and in this ADR, with nothing stopping a `delete`.
+
+The reason is the whole of it: **there is one operator, and it is the maintainer.**
+A guard's value is entirely in who it stops. It stops the person who does not know
+the rule, or who has forgotten it — and here there is no such person. Paying for a
+wall against yourself, today, is paying for nothing. The other two options were
+priced at roughly thirty-five lines and one afternoon, and at a test suite that
+must start a real database; neither is expensive, and both buy the same nothing
+while the operator count is one.
+
+An API in front of the database was raised and rejected on the merits, twice over.
+It would give this project the write path ADR-0001 and ADR-0006 exist to remove,
+and it would not even work: the operator writes SQL directly, so they are already
+past any door an API could guard.
+
+**What makes this reversible, and what the trigger would be.** The day a second
+person writes SQL against this database, the calculation changes and this should
+be revisited. The upgrade is small and does not disturb anything here: a
+`schema-guards.sql` carrying the trigger, applied once, plus a startup check
+asking whether the guard is installed and refusing to start when it is not. That
+check is a read, so the server gains no write and ADR-0006 is untouched. It is
+recorded here so the option does not have to be rediscovered.
+
+**What is accepted in the meantime.** `delete from rules` works. A Rule deleted
+that way takes with it the ability to explain every Violation already logged
+against it, and nothing warns anyone at the time.
+
+**What the constraints do cover is tested.** A Field that does not belong to its
+content, a Flanking value that is not `whitespace`, a Symbol that is more than
+one character, an empty reason, a duplicate Rule name on one Field, an Exception
+pointing at no Rule — every one of those is refused by the schema as shipped, and
+pg-mem enforces all of them. One character is written `looks_for like '_'` rather
+than with a length function: it counts characters rather than bytes, which is the
+same reading the server makes, and pg-mem has no length function to call.
+
+**Exceptions are rows too, and follow the same discipline.** An Exception belongs
+to exactly one Rule, as it always has. Removing one makes its Rule fire where it
+previously did not, which is a change to what the Rules do, so an Exception is
+disabled rather than deleted for the same reason a Rule is.
+
+**The operator no longer writes YAML.** Rule Sets were YAML held in a text
+column, written inside a SQL string with its apostrophes doubled. They are now
+ordinary columns. What goes with the YAML is its parser at startup, its parse
+error reporting, and the nesting that bound a Rule to a Field — the binding is
+now two columns.
+
+**Some checking moves into the database.** A Field that does not belong to the
+content, a Flanking value that is not `whitespace`, a Symbol that is not one
+character, an empty reason: these were startup refusals and become constraints,
+so they are refused when the operator writes them rather than when the server
+next starts. That is the better moment — the operator is present. Startup still
+refuses a Rule Set it cannot bind, because a constraint cannot express everything
+and a database restored from elsewhere is not something the schema witnessed.
+
+**Nothing in `src/` reads this yet.** This ADR and the schema record the design.
+The server still reads `rule_sets` and parses YAML, so applying the new schema
+alone leaves a server that starts against the old table. Wiring it up is separate
+work, and until it is done the two coexist.
+
+> Done in #26. The server reads `rules` and `rule_exceptions`, `rule_sets` is
+> gone from the schema, and the YAML parser and its dependency went with it.
+
+**`CONTEXT.md` needs its Rule Set Version entry rewritten.** It currently says
+the version is derived from the rule sets as supplied and names the text rather
+than the Rules parsed out of it. Both halves are now wrong.
+
+> Done in #21. The entry describes the Rules in force, and #26 adds the rule id
+> to what it says the version covers — a Rule renamed is a Rule a caller reads
+> differently, so a version that ignored the id would name two Rule Sets as one.
+=== 0008-a-default-set-of-rules-ships-as-sql-the-operator-applies.md ===
+# A default set of Rules ships as SQL the operator applies
+
+`default-rules.sql` ships in the repository beside `schema.sql`, and is applied
+the same way and by the same hand. It writes 89 checks — 74 Terms and 15
+Symbols, for the tells that a piece of writing came from a model — against each
+of the five Fields, so 445 Rules arrive, all enabled.
+
+Nothing about the write path changes. The operator applies it, the server reads
+what is there at startup, and this project still writes nothing to its own
+database (ADR-0006). A Rule is still a row and is still switched off rather than
+deleted (ADR-0007), which is how this file is meant to be tuned.
+
+## The ADR-0006 line this sits against
+
+ADR-0006 says the project "ships the schema and stops there: there is no load
+command, nothing read off the filesystem, and **no template to copy**." A file of
+default Rules is close enough to that last clause to be worth answering rather
+than stepping around.
+
+What that clause was rejecting was the loader's templates: files the project read
+at runtime, which had to stay in step with the database and gave the project two
+representations of the same Rule Sets for the rest of its life. None of that
+applies here. Nothing reads `default-rules.sql` at runtime — `grep` finds it in
+no source file, no script and no compose service. It is not a second
+representation of Rules the database also holds; it is the statements that put
+them there once, in the same position `schema.sql` occupies. After it is applied
+the database is the only representation, and an operator who tunes a Rule tunes
+the row, never the file.
+
+The property ADR-0006 exists to protect is untouched: the generating agent cannot
+loosen a Rule that keeps rejecting it (ADR-0001), and neither can anything this
+repository ships.
+
+## Considered Options
+
+**A SQL file the operator applies.** Chosen by the maintainer. It costs the
+operator one command they are already taking a version of, and the suite runs the
+shipped file against an in-process Postgres, so what is documented is what is
+tested — the same standard ADR-0006 set for the README's statements.
+
+**The server seeds an empty `rules` table.** Rejected. It is the only option that
+is default without the operator doing anything, and it is bought by giving the
+server a write path into its own Rules, which reverses ADR-0006 and weakens
+ADR-0001 to no purpose. The convenience is one command.
+
+**The tables as README documentation only.** Rejected. Cheapest, and it drifts:
+nothing runs it, so nothing catches a Rule that the schema would refuse. Six of
+the eighty-nine carry an apostrophe and one is a character that must be a single
+code point; none of that survives being retyped out of a table by hand.
+
+**Every Rule shipped disabled.** Considered seriously, and rejected by the
+maintainer. It answers the trimming problem directly — nobody decides up front
+whether `ensure that` is too noisy, and the operator switches on what earns its
+place. It was rejected because a file that does nothing when applied is a file
+whose effect is never seen, and because the honest way to learn which Rules are
+too noisy is to have them reject something.
+
+## Consequences
+
+**Applying it will reject Test Cases a tester wrote by hand.** This is the known
+cost of shipping enabled and untrimmed. `ensure that`, `correctly`, `properly`
+and `various` are ordinary QA English, and the QA-specific block is named in the
+file as the rows to switch off first. The file is a starting point to tune down,
+not a setting to accept.
+
+**The Rules are not this project's opinions.** Every row traces to one of six
+published anti-AI-writing references, named in the file's header and read in
+`docs/sessions/2026-08-14-anti-ai-writing-rule-tables.md`. Where the references
+disagree with the row, the file says so: `no-spaced-semicolon` and
+`no-spaced-colon` are recorded in it as catching odd spacing and **not** catching
+an AI tell, because the 2026 measurements say models use fewer semicolons than
+people do, and a Rule firing on one penalises the human habit. They ship because
+they cost nothing, and the file refuses to pretend they are more than that.
+
+**Applying it twice is safe, and does not undo tuning.** Each statement carries
+`on conflict (content_kind, field, rule_id) do nothing`, so a Rule already there
+is left exactly as it is. An operator who has switched Rules off can re-apply the
+file without switching them back on — which matters, because a second `psql -f`
+silently pulling back the operator's only lever would make that lever untrustable.
+
+**What the two tables cannot reach is written down in the file.** The full
+"it is not X, it is Y" frame, the rule of three, any threshold, thin punctuation,
+uniform sentence length, Title Case and the bold-header bullet layout are all out
+of reach of a Term and a Symbol. They are listed in the file so an absent Rule is
+not read as a clean area. Closing the first of them needs a third kind of check,
+with holes in it, and nothing here is blocked on that.
+
+**A Term is literal, so an apostrophe is two Rules' worth of coverage.** The six
+Terms carrying one hold a straight apostrophe, and the same phrase written with a
+curly one does not match them. It is still caught, by `no-curly-apostrophe` firing
+on the character, but under that Rule and with that reason.
