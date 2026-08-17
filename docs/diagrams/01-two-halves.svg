@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400">
+  <rect width="760" height="400" fill="#ffffff"/>
+  <g font-family="monospace" font-size="13" fill="#1b1f24">
+
+    <text x="380" y="30" text-anchor="middle" font-size="15" font-weight="bold">One question: if every test passes, what is known to work?</text>
+
+    <!-- skills half -->
+    <rect x="30" y="60" width="320" height="250" rx="6" fill="#f2f6fb" stroke="#3d6ea8" stroke-width="1.5"/>
+    <text x="190" y="85" text-anchor="middle" font-weight="bold" fill="#26527f">plugins/ — five skills</text>
+    <text x="190" y="103" text-anchor="middle" font-size="11" fill="#4a5764">what an agent reads</text>
+
+    <rect x="55" y="120" width="270" height="30" rx="4" fill="#ffffff" stroke="#9bb4d0"/>
+    <text x="70" y="140" font-size="12">analysis-sut &#8594; what must be tested</text>
+
+    <rect x="55" y="158" width="270" height="30" rx="4" fill="#ffffff" stroke="#9bb4d0"/>
+    <text x="70" y="178" font-size="12">review-ci-system &#8594; what tests prove</text>
+
+    <rect x="55" y="196" width="270" height="30" rx="4" fill="#ffffff" stroke="#9bb4d0"/>
+    <text x="70" y="216" font-size="12">create-test &#8594; write what is missing</text>
+
+    <rect x="55" y="234" width="270" height="30" rx="4" fill="#ffffff" stroke="#9bb4d0"/>
+    <text x="70" y="254" font-size="12">prune-test &#8594; remove what restates</text>
+
+    <rect x="55" y="272" width="270" height="26" rx="4" fill="#ffffff" stroke="#c9d4e0"/>
+    <text x="70" y="290" font-size="12" fill="#4a5764">remove-stale-files</text>
+
+    <!-- runner half -->
+    <rect x="410" y="60" width="320" height="250" rx="6" fill="#f5f2fb" stroke="#7a5ea8" stroke-width="1.5"/>
+    <text x="570" y="85" text-anchor="middle" font-weight="bold" fill="#5a3f85">cicd/tests — the runner</text>
+    <text x="570" y="103" text-anchor="middle" font-size="11" fill="#4a5764">what actually executes</text>
+
+    <rect x="435" y="120" width="270" height="30" rx="4" fill="#ffffff" stroke="#b8a5d0"/>
+    <text x="450" y="140" font-size="12">loader &#8594; YAML test cases</text>
+
+    <rect x="435" y="158" width="270" height="30" rx="4" fill="#ffffff" stroke="#b8a5d0"/>
+    <text x="450" y="178" font-size="12">executor &#8594; steps, in order</text>
+
+    <rect x="435" y="196" width="270" height="30" rx="4" fill="#ffffff" stroke="#b8a5d0"/>
+    <text x="450" y="216" font-size="12">judge &#8594; simple, or dual</text>
+
+    <rect x="435" y="234" width="270" height="30" rx="4" fill="#ffffff" stroke="#b8a5d0"/>
+    <text x="450" y="254" font-size="12">mcp &#8594; drive a server, verify live</text>
+
+    <rect x="435" y="272" width="270" height="26" rx="4" fill="#ffffff" stroke="#d0c9e0"/>
+    <text x="450" y="290" font-size="12" fill="#4a5764">reporter &#8594; console, json</text>
+
+    <!-- the join -->
+    <path d="M 350 190 L 410 190" stroke="#4a5764" stroke-width="1.5" fill="none"/>
+    <path d="M 410 190 l -8 -4 l 0 8 z" fill="#4a5764"/>
+    <path d="M 410 215 L 350 215" stroke="#4a5764" stroke-width="1.5" fill="none"/>
+    <path d="M 350 215 l 8 -4 l 0 8 z" fill="#4a5764"/>
+    <text x="380" y="180" text-anchor="middle" font-size="10" fill="#4a5764">runs</text>
+    <text x="380" y="234" text-anchor="middle" font-size="10" fill="#4a5764">result</text>
+
+    <rect x="30" y="335" width="700" height="45" rx="6" fill="#fdf6e8" stroke="#c9a227"/>
+    <text x="380" y="355" text-anchor="middle" font-size="12" font-weight="bold">The skills never run tests. The runner never decides what to test.</text>
+    <text x="380" y="372" text-anchor="middle" font-size="11" fill="#4a5764">The runner is reached only where the project's own framework structurally cannot go.</text>
+  </g>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400">
+  <rect width="760" height="400" fill="#ffffff"/>
+  <g font-family="monospace" font-size="13" fill="#1b1f24">
+
+    <text x="380" y="30" text-anchor="middle" font-size="15" font-weight="bold">The deterministic judge decides. The agent judge is a second opinion.</text>
+
+    <!-- run -->
+    <rect x="30" y="60" width="150" height="70" rx="4" fill="#ffffff" stroke="#4a5764"/>
+    <text x="105" y="85" text-anchor="middle" font-size="12">TC-*.yml</text>
+    <text x="105" y="103" text-anchor="middle" font-size="11" fill="#4a5764">steps, patterns,</text>
+    <text x="105" y="118" text-anchor="middle" font-size="11" fill="#4a5764">criteria</text>
+
+    <path d="M 180 95 L 225 95" stroke="#4a5764" stroke-width="1.5"/>
+    <path d="M 225 95 l -8 -4 l 0 8 z" fill="#4a5764"/>
+
+    <rect x="225" y="60" width="150" height="70" rx="4" fill="#ffffff" stroke="#4a5764"/>
+    <text x="300" y="85" text-anchor="middle" font-size="12">executor</text>
+    <text x="300" y="103" text-anchor="middle" font-size="11" fill="#4a5764">runs each step,</text>
+    <text x="300" y="118" text-anchor="middle" font-size="11" fill="#4a5764">collects the logs</text>
+
+    <path d="M 375 95 L 420 95" stroke="#4a5764" stroke-width="1.5"/>
+    <path d="M 420 95 l -8 -4 l 0 8 z" fill="#4a5764"/>
+
+    <!-- simple judge -->
+    <rect x="420" y="55" width="300" height="80" rx="4" fill="#f2faf4" stroke="#3f8a55" stroke-width="1.5"/>
+    <text x="570" y="78" text-anchor="middle" font-size="12" font-weight="bold" fill="#2f6b41">SimpleJudge — the verdict</text>
+    <text x="435" y="98" font-size="11">exit code 0 on every step</text>
+    <text x="435" y="114" font-size="11">expectPatterns found · rejectPatterns absent</text>
+    <text x="435" y="130" font-size="11">no error pattern in the logs</text>
+
+    <text x="570" y="152" text-anchor="middle" font-size="11" fill="#4a5764">deterministic · model-free · always runs</text>
+
+    <!-- dual opt-in -->
+    <path d="M 570 160 L 570 190" stroke="#4a5764" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <path d="M 570 190 l -4 -8 l 8 0 z" fill="#4a5764"/>
+    <text x="585" y="180" font-size="11" fill="#4a5764">JUDGE_MODE=dual</text>
+
+    <rect x="420" y="192" width="300" height="92" rx="4" fill="#f5f2fb" stroke="#7a5ea8" stroke-width="1.5"/>
+    <text x="570" y="214" text-anchor="middle" font-size="12" font-weight="bold" fill="#5a3f85">AgentJudge — opt in</text>
+    <text x="435" y="234" font-size="11">reads the logs against `criteria`</text>
+    <text x="435" y="250" font-size="11">catches the silent pass an exit code misses</text>
+    <text x="435" y="266" font-size="11">spawns JUDGE_AGENT over ACP, stdio</text>
+    <text x="570" y="300" text-anchor="middle" font-size="11" fill="#4a5764">keyless on a Claude subscription — no API key</text>
+
+    <!-- verifier -->
+    <rect x="30" y="192" width="345" height="92" rx="4" fill="#fafbfc" stroke="#4a5764"/>
+    <text x="202" y="214" text-anchor="middle" font-size="12" font-weight="bold">VerifierJudge — for MCP servers</text>
+    <text x="45" y="234" font-size="11">drives the server's tools with a model,</text>
+    <text x="45" y="250" font-size="11">then calls its read-only tools itself to check</text>
+    <text x="45" y="266" font-size="11">the answer against live truth</text>
+
+    <path d="M 375 238 L 420 238" stroke="#4a5764" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <path d="M 420 238 l -8 -4 l 0 8 z" fill="#4a5764"/>
+
+    <rect x="30" y="310" width="690" height="70" rx="6" fill="#fdf6e8" stroke="#c9a227"/>
+    <text x="375" y="332" text-anchor="middle" font-size="12" font-weight="bold">A model never decides a failure on its own.</text>
+    <text x="375" y="352" text-anchor="middle" font-size="11">The deterministic judge is the verdict, so a run is repeatable and explainable to whoever it failed.</text>
+    <text x="375" y="370" text-anchor="middle" font-size="11" fill="#4a5764">The agent judge adds a reason a green run should not have been green.</text>
+  </g>
+</svg>

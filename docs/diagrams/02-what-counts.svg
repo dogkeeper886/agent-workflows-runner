@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 430" width="760" height="430">
+  <rect width="760" height="430" fill="#ffffff"/>
+  <g font-family="monospace" font-size="13" fill="#1b1f24">
+
+    <text x="380" y="30" text-anchor="middle" font-size="15" font-weight="bold">A test counts by what it is allowed to touch — never by its folder</text>
+
+    <!-- classification -->
+    <rect x="30" y="55" width="230" height="34" rx="4" fill="#ffffff" stroke="#4a5764"/>
+    <text x="145" y="77" text-anchor="middle" font-size="12">every test in the suite</text>
+
+    <path d="M 145 89 L 145 112" stroke="#4a5764" stroke-width="1.5"/>
+    <path d="M 145 112 l -4 -8 l 8 0 z" fill="#4a5764"/>
+
+    <text x="145" y="128" text-anchor="middle" font-size="12">what real thing does it reach?</text>
+
+    <path d="M 145 138 L 145 158" stroke="#4a5764" stroke-width="1.5"/>
+    <path d="M 80 158 L 210 158" stroke="#4a5764" stroke-width="1.5"/>
+    <path d="M 80 158 L 80 178" stroke="#4a5764" stroke-width="1.5"/>
+    <path d="M 210 158 L 210 178" stroke="#4a5764" stroke-width="1.5"/>
+    <path d="M 80 178 l -4 -8 l 8 0 z" fill="#4a5764"/>
+    <path d="M 210 178 l -4 -8 l 8 0 z" fill="#4a5764"/>
+
+    <rect x="20" y="180" width="120" height="72" rx="4" fill="#fbf2f2" stroke="#a85e5e"/>
+    <text x="80" y="200" text-anchor="middle" font-size="11">nothing real</text>
+    <text x="80" y="218" text-anchor="middle" font-size="11" font-weight="bold" fill="#8a3d3d">component</text>
+    <text x="80" y="234" text-anchor="middle" font-size="10" fill="#8a3d3d">DOES NOT</text>
+    <text x="80" y="246" text-anchor="middle" font-size="10" fill="#8a3d3d">COUNT</text>
+
+    <rect x="150" y="180" width="120" height="72" rx="4" fill="#f2faf4" stroke="#3f8a55"/>
+    <text x="210" y="200" text-anchor="middle" font-size="11">the real thing</text>
+    <text x="210" y="216" text-anchor="middle" font-size="10">system ·</text>
+    <text x="210" y="230" text-anchor="middle" font-size="10">sys-int · accept</text>
+    <text x="210" y="246" text-anchor="middle" font-size="10" font-weight="bold" fill="#2f6b41">COUNTS</text>
+
+    <text x="145" y="278" text-anchor="middle" font-size="11" fill="#4a5764">level is half the filter —</text>
+    <text x="145" y="293" text-anchor="middle" font-size="11" fill="#4a5764">it must also reach a key point</text>
+
+    <!-- matrix -->
+    <rect x="320" y="55" width="410" height="240" rx="6" fill="#fafbfc" stroke="#4a5764" stroke-width="1.5"/>
+    <text x="525" y="78" text-anchor="middle" font-size="13" font-weight="bold">the matrix</text>
+    <text x="525" y="95" text-anchor="middle" font-size="11" fill="#4a5764">key points &#215; counting tests</text>
+
+    <text x="470" y="120" font-size="11">#1</text>
+    <text x="530" y="120" font-size="11">#2</text>
+    <text x="590" y="120" font-size="11">#3</text>
+    <text x="650" y="120" font-size="11">#4</text>
+
+    <text x="345" y="148" font-size="11">system</text>
+    <text x="345" y="176" font-size="11">sys-int</text>
+    <text x="345" y="204" font-size="11">acceptance</text>
+
+    <g fill="#b0b8c0">
+      <text x="470" y="148">&#183;</text><text x="530" y="148">&#183;</text><text x="590" y="148">&#183;</text><text x="650" y="148">&#183;</text>
+      <text x="470" y="176">&#183;</text><text x="530" y="176">&#183;</text><text x="590" y="176">&#183;</text><text x="650" y="176">&#183;</text>
+      <text x="470" y="204">&#183;</text><text x="530" y="204">&#183;</text><text x="590" y="204">&#183;</text><text x="650" y="204">&#183;</text>
+    </g>
+
+    <line x1="340" y1="220" x2="710" y2="220" stroke="#c9d4e0"/>
+    <text x="345" y="242" font-size="11" fill="#8a3d3d">behind a fake</text>
+    <text x="470" y="242" font-size="11" fill="#8a3d3d">225 tests land here, in one column</text>
+
+    <text x="525" y="272" text-anchor="middle" font-size="11" fill="#4a5764">an empty row is a gap &#8594; create-test</text>
+    <text x="525" y="288" text-anchor="middle" font-size="11" fill="#4a5764">a covered component test &#8594; prune-test</text>
+
+    <rect x="30" y="320" width="700" height="90" rx="6" fill="#fdf6e8" stroke="#c9a227"/>
+    <text x="380" y="342" text-anchor="middle" font-size="12" font-weight="bold">A count is not evidence. A percentage is not evidence.</text>
+    <text x="380" y="364" text-anchor="middle" font-size="11">A suite can be large, tidy and green and prove almost nothing —</text>
+    <text x="380" y="380" text-anchor="middle" font-size="11">every dependency substituted, every assertion checking a value it fed the fake itself.</text>
+    <text x="380" y="399" text-anchor="middle" font-size="11" fill="#4a5764">Key points come first: "counts" has no meaning until something says what must be tested.</text>
+  </g>
+</svg>
