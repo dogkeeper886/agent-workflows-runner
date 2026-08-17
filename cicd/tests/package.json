@@ -12,8 +12,6 @@
     "test:e2e": "tsx src/cli.ts run --suite e2e",
     "list": "tsx src/cli.ts list",
     "dev": "tsx src/cli.ts",
-    "audit-bind": "tsx src/audit-bind.ts",
-    "port-yaml": "tsx src/port-yaml.ts",
     "test:mcp": "tsx src/cli.ts test-mcp",
     "check:verifier": "tsx scripts/check-verifier-helpers.ts",
     "check:mcp-host": "tsx scripts/check-mcp-host.ts",
