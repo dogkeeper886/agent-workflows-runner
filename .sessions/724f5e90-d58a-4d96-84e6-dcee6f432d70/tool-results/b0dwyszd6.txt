@@ -1,0 +1,523 @@
+==================== .sessions/f4492b01-e778-4d0a-938d-4455205b3635.jsonl
+--- 2026-08-15T13:01:02.683Z
+list open issue. we need to close them all.
+--- 2026-08-15T13:03:12.489Z
+close all yet?
+--- 2026-08-15T13:03:44.966Z
+i am going to re-desgin this repo. close all.
+--- 2026-08-15T13:05:53.279Z
+the mat skill actually work bad.
+1. remove its create file from this repo.
+2. identify where we add it info our process.
+--- 2026-08-15T13:08:53.190Z
+the world should be simple. use grep or script. filter, list and remove them.
+--- 2026-08-15T13:12:54.929Z
+1. delete  /home/jack/src/ai-qa-workflow/docs/adr  2. delete /home/jack/src/ai-qa-workflow/.claude/rules
+--- 2026-08-15T13:14:27.045Z
+remove  /home/jack/src/ai-qa-workflow/CONTEXT.md  /home/jack/src/ai-qa-workflow/README.md  /home/jack/src/ai-qa-workflow/CLAUDE.md
+--- 2026-08-15T13:15:07.230Z
+remove  /home/jack/src/ai-qa-workflow/docs
+--- 2026-08-15T13:15:51.400Z
+i consider remove  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/rules. no more complecate things.
+--- 2026-08-15T13:17:50.518Z
+remove all. they looks like can handle by skill itself.
+--- 2026-08-15T13:19:16.058Z
+no need. we will re-design exist command soon. even remove
+--- 2026-08-15T13:20:17.851Z
+not, yet. check https://github.com/multica-ai/andrej-karpathy-skills/tree/main ensure the  /home/jack/src/ai-qa-workflow/templates/CLAUDE.md use exactlly same
+--- 2026-08-15T13:22:05.742Z
+make it same. we need to re-design exist all. if you left any. it will become stale.
+--- 2026-08-15T13:23:13.195Z
+make /home/jack/src/ai-qa-workflow/templates/CLAUDE.md  same as https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md
+--- 2026-08-15T13:25:39.172Z
+i know. it is not worthy to do it now. wait here.
+--- 2026-08-15T13:32:00.158Z
+/home/jack/src/ai-qa-workflow/SKILL.md create a folder for it  /home/jack/src/ai-qa-workflow/.claude/worktrees
+--- 2026-08-15T13:33:34.544Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/doc-gen-readme according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-15T13:42:09.551Z
+1. can we remove allowed-tools
+2. rename to gen-readme
+3. create a script grep doc-workflow. we may need to grep all file, not only this file.
+4.  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/doc-review-readme/SKILL.md will rename to review-readme
+--- 2026-08-15T13:45:17.637Z
+1. ensure every key point gen a svg to png. not one, three. /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md 
+2. do you also apply recommend fix yet? what do you think about the recommend?
+--- 2026-08-15T13:46:06.544Z
+1. ensure every key point gen a svg to png. not one, not three, all. /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md 
+2. do you also apply recommend fix yet? what do you think about the recommend?
+--- 2026-08-15T13:48:54.126Z
+apply 2, 3, 4, 5 and 9. i think the command only trigger when agent deside to edit, create readme.
+--- 2026-08-15T13:53:54.865Z
+1. no, you are right. my point should apply to  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-readme/SKILL.md
+2. i find out the  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md drift from my original version a lot. can you get original one?
+--- 2026-08-15T13:57:06.155Z
+thanks
+1. do  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md still have svg to png in every key point design?
+--- 2026-08-15T13:57:51.217Z
+let's tr to review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-15T14:00:34.371Z
+fix A and B
+--- 2026-08-15T14:01:38.303Z
+1. you can commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md 
+2. let's see  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-readme/SKILL.md why it do not do reverse order of   /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md ?
+--- 2026-08-15T14:03:55.716Z
+great. fix it.
+--- 2026-08-15T14:05:57.657Z
+i still see ".claude/rules/project-profile.md". add ".claude/rules/project-profile.md" to grep script, too
+--- 2026-08-15T14:08:46.935Z
+1. fine. we keep going and let script memory it. 
+2. commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md 
+3. review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-readme/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-15T14:11:39.846Z
+1. i see a problem here. the  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-readme/SKILL.md contain "Reuses `reviewing-phrasing` + `reviewing-typography`" we probably need to remove it. let them auto select by agent. 
+2. apply your recommend fix.
+--- 2026-08-15T14:21:22.244Z
+keep it. since the  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/gen-readme/SKILL.md already mention  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-readme/SKILL.md. i think agent edit will consider to do both. if nothing else. commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-readme/SKILL.md
+--- 2026-08-15T14:28:33.822Z
+now, let's handle  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md 
+1. i would like to re-design in two different view.
+    a. format. we need to have a dedicate format. web search the report out come best practice. for how to make report simple, clear. use ascii diagram explain complicate thing, ...etc. the goal is that. human is overwhelm by information. the report outcome should be report to director, vp. their time is money. their thinking is value. do not waste time.
+    b. ensure the skill can be select by agent if need it.
+--- 2026-08-15T14:32:20.655Z
+show me what do it look like.
+--- 2026-08-15T14:33:32.681Z
+give me revise pass example.
+--- 2026-08-15T14:34:25.744Z
+give me pass example.
+--- 2026-08-15T14:55:04.772Z
+not good. in several things.
+1. don't offer then what user are asked.
+2. less is more
+3. answerquestion and move on
+4. the time human read should less than 30 seconds.
+5. in my opinion, only two section show: for example pass, recomment next. ask do user need pass info or run next. for revise-pass: we shoe revise-pass, next, too. if user ask, we show revise. for block, risk only show when user ask for. only if the next block, or fail. then it show.
+--- 2026-08-15T14:56:48.322Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-15T14:58:55.953Z
+very good. apply recommend fix.
+--- 2026-08-15T15:00:11.152Z
+do we design an explain logic for  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md? let me see how it explain.
+--- 2026-08-15T15:00:15.931Z
+do we design an explain logic for  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md? let me see how it explain detail.
+--- 2026-08-15T15:01:24.540Z
+commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md
+--- 2026-08-15T15:02:42.623Z
+let's handle /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md. i wonder we can use  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md directly. what do you think?
+--- 2026-08-15T15:05:31.729Z
+1. no, i do not mean move /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+2. i want to fix  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md by a delete, re-create style re-write. since the content mostly break as you say.
+3. tell me what do you think
+--- 2026-08-15T15:07:50.349Z
+list the reference skill or file it relate to  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md
+--- 2026-08-15T15:10:00.632Z
+1. i want to cut "reviewing-artifacts (agent-read tooling) ↔ reviewing-phrasing (a human-read doc's words) ↔ reviewing-typography" bind or flow
+2. why  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md need CLAUDE.md
+--- 2026-08-15T15:11:21.562Z
+1. i see this line "CLAUDE.md Q4 (matches the repo — no orphaned references)"
+2. explain how  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md triger?
+--- 2026-08-15T15:12:44.774Z
+in other word, when create or edit skill file. correct?
+--- 2026-08-15T15:13:17.283Z
+do  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md review according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md idea?
+--- 2026-08-15T15:14:29.154Z
+yes, show me the gap table
+--- 2026-08-15T15:16:58.780Z
+1. fix the Q3 conflict
+2. can we let  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md remove allowed-tools. i still think we do not limit at all.
+--- 2026-08-15T15:17:43.383Z
+give me gap table in priority, or value of worth to do.
+--- 2026-08-15T15:18:43.212Z
+1. give me gap table in priority, or value of worth to do.
+2. i mean the allowed-tools can be detect by review skill. and review skill revise to remove allowed-tools from audit skill
+--- 2026-08-15T15:21:22.887Z
+apply the three cheap ones
+--- 2026-08-15T15:22:18.330Z
+i have an idea. show me the gap from current version to very riginal version of  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md
+--- 2026-08-15T15:24:01.380Z
+explain the report fix
+--- 2026-08-15T15:24:33.790Z
+in review skill or report skill?
+--- 2026-08-15T15:25:59.947Z
+will it break the task like issue fix in gthub? the only single task verdict
+--- 2026-08-15T15:26:28.034Z
+apply it to both skills
+--- 2026-08-15T15:29:56.030Z
+i do not like the format. the """
+reporting-outcomes (163 lines) got the general rule as a new section before Verdicts. It opens with the guard rather than the feature — "One subject, however many findings inside it, is one verdict and never a table" — with the #42 fixed example first, so the single-task case is what's read before the aggregate shape appears. The independence test is the deciding line: could the reader act on one without the others?
+
+reviewing-artifacts (171 lines) got one sentence — CUT sorts first when ranking across multiple artifacts, because deleting a file voids its other findings. Nothing about tables or aggregation; grep for per-item table returns 0 there. That rule is reporting-outcomes', and the other three reviewers now inherit it without a copy.
+""" should not show at all. i do not ask for. it is not two line. you can multiple "PASS — applied to both, split as designed." one "Next: commit both, or review them."
+--- 2026-08-15T15:30:29.331Z
+fix the report-outcome. if you do change it.
+--- 2026-08-15T15:31:21.631Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-15T15:32:18.697Z
+show me break in a table.
+--- 2026-08-15T15:32:56.904Z
+apply recommend fix
+--- 2026-08-15T15:34:10.381Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-15T15:35:44.787Z
+show me the worth to apply in table
+--- 2026-08-15T15:35:59.904Z
+apply 1 and 2
+--- 2026-08-15T15:36:33.321Z
+do you apply fix for /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-artifacts/SKILL.md all or worth to apply?
+--- 2026-08-15T15:37:00.088Z
+show me the worth to apply table.
+--- 2026-08-15T15:37:54.089Z
+yeah. make 4 change. not 6
+--- 2026-08-15T15:38:47.567Z
+commit both
+--- 2026-08-15T15:40:01.974Z
+commit  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills
+--- 2026-08-15T15:44:41.021Z
+let's handle  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-typography/SKILL.md
+1. this skill create from extract  '/home/jack/Documents/WEB GUI 01.txt'  '/home/jack/Documents/WEB GUI 02.txt'  '/home/jack/Documents/WEB GUI 03.txt' idea
+2. the goal of the skill is make human easy to read markdown file or html file
+3. target is the file need to read by human.
+4. give me idea for what you think
+--- 2026-08-15T15:46:24.513Z
+all in. delete re-create style rewrite
+--- 2026-08-15T15:47:43.200Z
+review reviewing-typography according to writing-agent-skills
+--- 2026-08-15T15:48:35.813Z
+only apply worth to fix.
+--- 2026-08-15T15:49:26.579Z
+commit reviewing-typography
+--- 2026-08-15T16:01:42.068Z
+now, handle  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-phrasing/SKILL.md 
+1. i think the goal of this skill need to identify the target reader. for example, if it is a readme, a test plan, a demo ppt content, or its script or speak., ...etc
+2. i think it still hold a key point of ai agent do not read, fell, wish to know what's the edting file purpose epecially a markdown file. for .py file .c file agent take care them properly define. but text file, no. we need to make agent understand to purpose and its format. as the result, this skill need to run script ensure no weird charactor, symble show up, format is correct. is it is a technical document. we need a script.
+3. for pattern and list, you can check /home/jack/src/testcase-validator its issue 20
+4. tell me what do you think? if we can not do it in single skill. we split.
+--- 2026-08-15T16:06:01.958Z
+1. i move  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-phrasing/reference to  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-phrasing 
+2. you extract useful from  /home/jack/src/ai-qa-workflow/.claude/skills/writing-technical-docs/SKILL.md to  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-phrasing/SKILL.md 
+3. use your plan
+4. agree?
+--- 2026-08-15T16:07:16.466Z
+or you can reject. hand write yourself. then you can move back  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-phrasing/reference to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-technical-docs. up to you.
+--- 2026-08-15T16:10:55.614Z
+1. delete  /home/jack/src/ai-qa-workflow/.claude/skills/writing-technical-docs 
+2. do plugin system allow script. if not, we need to discuss
+--- 2026-08-15T16:12:31.057Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-phrasing according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-15T16:18:16.560Z
+see finding
+--- 2026-08-15T16:19:30.613Z
+1. fix worth to fix. 
+2. how you handle what i write in issue 20?
+--- 2026-08-15T16:22:34.834Z
+/home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-phrasing commit
+--- 2026-08-16T01:45:24.005Z
+you can commit deleted file now.
+--- 2026-08-16T02:05:03.083Z
+let's handle  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/ship-merge  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/ship-create-pr  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-finish later
+1. we used story file before. i gonna not use story anymore
+2. i want to micmic zed latest beta idea. you web search it. as i recall it do a session log export. save to repo. then future agent can have the cotext.
+3. according #2, the single story, prd, spec is not enough for agent make decision. a lot of drift come from the lost or gap that missing the context. so i propose a raw session save. do not cut, summary and extract.
+4. according #3, we need to re-design the current workflow. 
+    a. our goal is using github/gitlab platform as possible as we can
+    b. to fit the github/gitlab process. we have to have create task skill, create task skill, solve issue, do task, review skill, create pr, merge,...etc skill 
+    c. for the skill when to use, it identify user action. for example, if user ask for doing something. skill identify what kind of action user want. if it is ask file an issue we create an issue with saved session log.
+    d. for each skill we gonna have dedicate template and step that provide enough of context.
+5. draft a temp file for tables of my latest request in this session and propose skill in temp folder in this repo.
+6. do not touch current file for now.
+--- 2026-08-16T02:10:51.328Z
+draw an ascii explain the process of Proposed skills
+--- 2026-08-16T02:16:49.149Z
+a little of different for what i want.
+1. can you think again from user of view? from when-to-use
+2. for #1. if user say something in chat session. is the conversation create an task/issue or handle in session?
+3. for #2. if user say pr, merge. our skill will take place no doubt. it also handle created issue/task/branch as well
+4. so according to #1, #2 and #3. the diagram miss a portal file task/issue.
+--- 2026-08-16T02:19:23.521Z
+in other word. the most important is file-issue. let's sart this one first.
+--- 2026-08-16T02:21:17.728Z
+good. use an tree diagram show me the structure of  /home/jack/src/ai-qa-workflow/tmp/skills/file-issue/SKILL.md
+--- 2026-08-16T02:28:10.481Z
+most of design i agree  /home/jack/src/ai-qa-workflow/tmp/skills/file-issue/SKILL.md 
+1. we need to support github and gitlab both. if you are not know the exactly the gitlab cli. you can websearch and try in this host. we have some setup in this host, too.
+2. skip this if we already did. we need to have template define the issue should provide: section, content. for example, include but not limit to. the issue should contain the rca and propose fix. for example, the task should include but not limit to plan to do, expect outcome, what's next.
+--- 2026-08-16T02:33:33.844Z
+i want to review  /home/jack/src/ai-qa-workflow/tmp/skills/file-issue/SKILL.md againt web search best practice of bug/issue, task template/structure.
+1. give me an evaluate table for what we have, we do not have
+2. the table use to review worth to add or not.
+--- 2026-08-16T02:35:43.084Z
+add the three
+--- 2026-08-16T02:38:42.562Z
+review  /home/jack/src/ai-qa-workflow/tmp/skills/file-issue/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T02:40:04.698Z
+show worth fix table
+--- 2026-08-16T02:41:12.141Z
+apply 2, 3 and 4
+--- 2026-08-16T02:43:20.657Z
+move  /home/jack/src/ai-qa-workflow/tmp/skills/file-issue to  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills
+--- 2026-08-16T02:44:16.102Z
+run  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md for handle take-issue
+--- 2026-08-16T02:45:07.144Z
+run  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md for handle take-issue
+1. create take-issue draft in  /home/jack/src/ai-qa-workflow/tmp/skills
+--- 2026-08-16T02:49:36.560Z
+review the process of """❯ run  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md for handle take-issue
+  1. create take-issue draft in  /home/jack/src/ai-qa-workflow/tmp/skills
+
+Not creating a live issue — running the process and writing both outputs to tmp/skills.
+
+● Write(tmp/skills/take-issue/ISSUE.md)
+Wrote 83 lines to tmp/skills/take-issue/ISSUE.md
+<!--
+Filed by running file-issue against "handle take-issue".
+Template: task.md. Not yet created on the platform.
+
+Step 1 (should this be an issue): yes — work identified, not started, and it will be
+picked up outside the session that identified it.
+Step 2 (search): not run; no live issue is being created.
+Step 3 (save the session): BLOCKED. See Context.
+Title: Picking up an issue is a decision the picker can refuse
+-->
+… +73 lines
+
+  Ran 1 shell command
+
+Both verbs verified. Now the skill draft.
+
+● Write(tmp/skills/take-issue/SKILL.md)
+Wrote 138 lines to tmp/skills/take-issue/SKILL.md
+---
+name: take-issue
+description: |
+  Picks up a tracked issue and claims it: resolves which one, reads it whole along with the
+  session it links, judges whether it can actually be started, and refuses it back when it
+  cannot. Assigns it, sets the state label, cuts the branch, and stops before writing any
+  code — so a misreading is catchable while it is still cheap. The read half of an issue;
+  something else does the work.
+when_to_use: |
+  Use whenever work is about to start on something already tracked — "wor
+--- 2026-08-16T02:53:42.331Z
+1. no need. stop commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md we monitor it for a while
+2. back to handle  /home/jack/src/ai-qa-workflow/tmp/skills/take-issue/SKILL.md show the structure in ascii tree diagram. and another diagram for flow ascii diagram.
+--- 2026-08-16T02:54:52.225Z
+how  /home/jack/src/ai-qa-workflow/tmp/skills/take-issue/SKILL.md handle no session log? how it handle have session log
+--- 2026-08-16T02:58:47.114Z
+1. i think even we do not have ession log. we still need to process it. session log is an enhance of accuracy for agent. no a must.
+2. we need to remember the goal of github/gitlab. we help user become easy to benifit from the platfor,
+--- 2026-08-16T03:00:22.048Z
+1. do we need to revise  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md ?
+2. show me its design goal
+--- 2026-08-16T03:03:07.535Z
+revise file-issue for the three places
+--- 2026-08-16T03:04:30.885Z
+1. move take-issue to plugins skills
+2. review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T03:05:22.478Z
+see findings
+--- 2026-08-16T03:07:15.629Z
+1. if the #1 is /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md we need to save session log as possible. agree
+2. apply worth to fix
+--- 2026-08-16T03:08:32.024Z
+review take-issue according to writing-agent-skills
+--- 2026-08-16T03:09:15.274Z
+i see  /home/jack/src/ai-qa-workflow/tmp/skills/take-issue/ISSUE.md still in  /home/jack/src/ai-qa-workflow/tmp/skills/take-issue
+--- 2026-08-16T03:10:07.357Z
+agree to delete  /home/jack/src/ai-qa-workflow/tmp/skills/take-issue if it do not need.
+--- 2026-08-16T03:12:11.686Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/take-issue/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T03:12:51.379Z
+see findings
+--- 2026-08-16T03:13:17.756Z
+apply worth to fix
+--- 2026-08-16T03:14:07.418Z
+commit take-issue and file-issue
+--- 2026-08-16T03:16:13.911Z
+let's review  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md 
+1. we already do some skill. give me an order, sequence for next
+--- 2026-08-16T03:17:25.385Z
+i have a question. what's the different between take-issue and do-task
+--- 2026-08-16T03:18:45.602Z
+give me a flow chart asci diagram. from file-issue, inclde plan-work
+--- 2026-08-16T03:22:52.216Z
+review the flow by web search the github, gitlab flow best practice. in my personal view. the hard requirement only the skill create, update and close issue, branch and pr. for plan, probably need to map to project dashboard of multiple stage, phases and task design.
+--- 2026-08-16T03:30:28.738Z
+1. give me the revise version of ascii diagram in  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md 
+2. you are right about github of view that """GitHub Flow's canonical lifecycle is branch off main → open PR → review → merge → delete branch, and GitLab Flow is described as that plus environment branches when you need them. So the five you'd call hard requirement — create/update/close issue, branch, PR — aren't a subset of the flow. They are the flow.
+
+file-issue → take-issue → do-task → open-pr → land-pr maps onto it one-to-one, including branch deletion, which is an explicit step in the canonical description rather than cleanup.""". we are doing the flow
+3. according to #2. i think my goal is not only fill the software design process or lifecycle. i want to include but not limit to code, document, operation, environment, too. so i make file-issue have multiple purpose.
+4. show me the revise diagram fisrt. do not change skill file. let's discuss.
+--- 2026-08-16T03:33:16.030Z
+update the diagram in redesign-draft.md
+--- 2026-08-16T03:34:47.678Z
+update  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md "4. Proposed skills"
+--- 2026-08-16T03:35:47.878Z
+update decision #6
+--- 2026-08-16T03:36:36.623Z
+1. read  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md
+2. revise or delete re-create it
+--- 2026-08-16T03:39:26.258Z
+show me a table for "Open questions went from six to four"
+--- 2026-08-16T03:49:08.904Z
+5. if only one skill file-issue need it. no. i will not export save-session as a skill. just like private variable, and function in a class.
+7. i am sure no body like complete, stale issue at list, board. if it is only paper work. i would like triger by when to use as an agent work on other skill, event find out the truth of #7 statement. recommend as a follow-up to clean up togather current running task. but i do not deside embeded in exist skill or separate skill. what do you recommen?
+  a. agree we can add template. and we should to. agent is not handle text file very well. just like code language. they have to hae more and more template to get better
+  b. i do not understand merge stuff you say.
+--- 2026-08-16T03:54:12.395Z
+yes, record 5, a and 7 in the draft. one thing i can tell in merge. user and i do not care the detail of github and gitlab. when it say merger. it only have one meaning. do everything you have to do, denpend on repo design, setup, guideline process, even a ci, code review run. whatever, the result. only result i want to see is the code in main. branch merge and delete. other thing is not important. if agent can not do that we have a report outcome for fail. or revise pass.
+--- 2026-08-16T04:01:46.859Z
+fine. let me explain the total design for session log.
+1. according my and zed study. no matter how hard the document, spec describe the thing need to do. a clear session may read it in different aspect.
+2. it is a waste and a hate of human describe in each session.
+3. in present expirence of matt skill. the hard reference of adr or any priciple, or spec like will hurt the thinking of new implement. block by minir wording in history. agent is lacking of document extrack and understanding in type of text only document.
+4. as the result of #1, #2 and #3. we retire, trim any docs/ of story, adr. let code say its story. let test script describe the usecase. test part we will document in agent-runner-flow
+5. so the entire github/gitlab relate skill sohuld read the session as a background knowledge, then do the task, review the task.
+6. anything else?
+--- 2026-08-16T04:26:24.712Z
+i think we export this session entirely for the evry first. i hope this will show the value while we review this log again. probably the pushback will solved. what i am thinking is how we micmic human behaviour. human have memroy, but not history, have priciple/guideline, break it when time/condition change. so no, not always rely on session. and yes, it is a check for now. i beleiev the session log will change/effect agent desiosion in a good way.
+--- 2026-08-16T04:30:27.983Z
+i want you save what claude code write to the system into repo. no gitignore.
+--- 2026-08-16T04:31:58.036Z
+i want you save what claude code write to the system into repo. no gitignore. no extrack, cut, filter and summary. it mean as possible.
+--- 2026-08-16T04:36:40.690Z
+1. carry them as well. since it is industry very begining trial. we have nothing can do to compress or private with concern. commit them.
+2. then we back to  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md show me a table for propose skills table implement status. i want to know done, not done, or need revise.
+3. i can not see the table now in  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md. do you want to revise process flow chart and write new table?
+--- 2026-08-16T04:46:05.542Z
+since we deside save-session inside file-issue. rest of github/gitlab skill in the table just read.
+1. do we need to revise file-issue or anyothe session-log produce file user?
+2. if #1 is no. then we do do-task > reviewing-finish(we need it to identify half done, need revise(stock or can solve), done, not start yet(or block), ...etc or route to plan if multiple task, fix required > open-pr > land-pr.
+3. add back flow chart diagram and propose skill table back to  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md
+--- 2026-08-16T04:49:02.595Z
+let's start from  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md.
+1. if it need revise. go.
+2. if no or complte. report.
+--- 2026-08-16T04:50:05.733Z
+let's review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T04:51:04.851Z
+apply worth fix
+--- 2026-08-16T04:53:07.170Z
+1. commit /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue.
+2. as i recall we deside add template for it. recall from session log.
+3. if #2 is true. web search best practice for those templates section, content, ...etc
+--- 2026-08-16T04:55:14.086Z
+build all three
+--- 2026-08-16T04:57:06.479Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T04:58:14.947Z
+apply finding 1
+--- 2026-08-16T04:59:09.198Z
+commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/file-issue
+--- 2026-08-16T05:00:43.755Z
+let's handle  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/take-issue/SKILL.md 
+1. do it need to revise for save session log relate things
+2. i do not recall we do have other plan for  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/take-issue/SKILL.md. read log for the plan from session log.
+--- 2026-08-16T05:01:53.729Z
+apply both
+--- 2026-08-16T05:07:07.388Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/take-issue/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T05:07:53.094Z
+apply worth to fix
+--- 2026-08-16T07:34:14.457Z
+commit take-issue
+--- 2026-08-16T07:38:38.530Z
+correct. according to  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md and our session log. we are going to create do-task
+--- 2026-08-16T07:52:40.519Z
+use ascii diagram explain the  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/do-task/SKILL.md
+--- 2026-08-16T07:54:58.195Z
+from entire github/gitlab flow. draw ascii diagram show where do-task is.
+--- 2026-08-16T07:56:33.936Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/do-task/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T07:59:08.514Z
+1. apply worth to fix
+4. it depend on  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md can accept or not. and probably not cause problem. i may like to keep it. what do you think?
+--- 2026-08-16T08:00:55.231Z
+apply that to reporting-outcomes with smallest change
+--- 2026-08-16T08:01:49.663Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T08:02:54.775Z
+show me worth to fix #
+--- 2026-08-16T08:03:10.885Z
+agree
+--- 2026-08-16T08:05:32.803Z
+commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/do-task/SKILL.md  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md
+--- 2026-08-16T08:07:20.732Z
+let's do plan-work according to  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md in  /home/jack/src/ai-qa-workflow/tmp folder
+--- 2026-08-16T08:10:32.334Z
+show me the logic design of  /home/jack/src/ai-qa-workflow/tmp/skills/plan-work/SKILL.md in an ascii diagram
+--- 2026-08-16T08:11:57.857Z
+good. show me the flow or process diagram in entire github/gitlab flow. for where it is. how it act
+--- 2026-08-16T08:13:23.130Z
+review  /home/jack/src/ai-qa-workflow/tmp/skills/plan-work/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T08:15:19.032Z
+show me the table of worth fix.
+--- 2026-08-16T08:15:42.712Z
+Do 1, 2 and 3 skip 4
+--- 2026-08-16T08:17:42.268Z
+move  /home/jack/src/ai-qa-workflow/tmp/skills/plan-work to  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills then commit
+--- 2026-08-16T08:19:52.788Z
+1. delete  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reviewing-finish 
+2. let's do review-work according to  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md and session log.
+--- 2026-08-16T08:23:32.440Z
+show me the  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-work/SKILL.md design logic in ascii diagram
+--- 2026-08-16T08:24:35.255Z
+show me where is  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-work/SKILL.md in entire flow in ascii diagram. show me how it act
+--- 2026-08-16T08:27:00.016Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-work/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T09:30:12.413Z
+see the findings
+--- 2026-08-16T09:31:08.668Z
+apply worth to fix.
+--- 2026-08-16T09:33:10.427Z
+coomit /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/review-work/SKILL.md
+--- 2026-08-16T09:35:55.680Z
+1. now, delete /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/ship-create-pr.
+2. let's handle open-pr according to  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md and session log.
+--- 2026-08-16T09:38:41.996Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/open-pr/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T09:41:51.499Z
+use  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md describe your outcome again
+--- 2026-08-16T09:42:59.724Z
+apply worth to fix
+--- 2026-08-16T09:46:12.939Z
+commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/open-pr/SKILL.md
+--- 2026-08-16T09:51:17.427Z
+let's handle land-pr according to  /home/jack/src/ai-qa-workflow/tmp/redesign-draft.md and session log
+1. delete /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/ship-merge 
+2. report outcome follow  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md
+--- 2026-08-16T09:56:16.881Z
+rca why detail show before ask """BUILT — land-pr, 153 lines. The spine is complete.
+Next: review it, or commit with the ship-merge deletion.
+
+Want the detail?
+
+The gate survived whole, and got teeth. All three of its refusals carried over — a green agent pass doesn't answer it, being told to merge doesn't answer it ("a request to reach this question, never the answer to it"), and a confirmation given for a different head doesn't carry. What's new is that the SHA is now passed to the merge itself via --match-head-commit / --sha. The old unit asked a human about one commit and then merged whatever the head happened to be, so a push landing mid-run went in unreviewed. That gap is closed mechanically rather than by instruction.
+
+The merge contract went in as written: the outcome is code in the default branch and the branch gone, the route is the repo's business, and an unreachable outcome is a verdict rather than a partial reported as success.
+
+Two things recovered from an issue that was closed unfixed during the teardown. A merge command that doesn't return is not evidence of failure — success, timeout and failure look identical from the client, and a blind retry may act on a merge that already landed, so it checks origin/<default> rather than the local copy. And the note that between the merge and the pull, every file the change touched reads as reverted, which is expected rather than data loss.
+
+Four outcomes, all exemplified, including UNKNOWN — which exists precisely becaus
+--- 2026-08-16T09:58:28.016Z
+show me the design of  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md in an ascii diagram. point the problem area
+--- 2026-08-16T09:59:39.365Z
+apply the fix to reporting-outcomes
+--- 2026-08-16T10:02:55.879Z
+1. review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md 
+2. report outcome according to  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md
+--- 2026-08-16T10:04:09.058Z
+detail
+--- 2026-08-16T10:04:35.101Z
+apply only worth to fix
+--- 2026-08-16T10:05:36.988Z
+commit  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/reporting-outcomes/SKILL.md
+--- 2026-08-16T10:40:46.101Z
+do we already reviewed  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/land-pr/SKILL.md ?
+--- 2026-08-16T10:42:29.153Z
+review  /home/jack/src/ai-qa-workflow/plugins/agent-workflows/skills/land-pr/SKILL.md according to  /home/jack/src/ai-qa-workflow/.claude/skills/writing-agent-skills/SKILL.md
+--- 2026-08-16T10:44:16.141Z
+detail
+--- 2026-08-16T10:46:56.193Z
+apply worth to fix
+--- 2026-08-16T10:47:33.625Z
+commit land-pr
