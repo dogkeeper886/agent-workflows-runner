@@ -43,31 +43,6 @@ files' "what this owns vs. what it hands off" boundary, made concrete.
   one per suite dir under `cicd/tests/testcases/<suite>/`
 - title prefixes: `[STORY-XXX] Plan` · `[#<spec>] Test Plan` · `[STORY-XXX] <task>`
 
-## Labels
-
-Names the workflow uses; colours where the workflow pins one (`#hex`), otherwise the
-project's choice.
-
-- plan: `plan` (`#5319e7`)
-- test plan: `test-plan` (`#006b75`)
-- priority: `priority:high` · `priority:medium` · `priority:low`
-- type: `feature` · `enhancement` · `bug` · `docs`
-- status (pipeline position): `status:in-progress` · `status:needs-review` · `status:blocked`
-- triage state (readiness): `ready-for-agent` — applied upstream, and `ship-merge` is its only
-  exit. The five canonical roles and this project's strings: `docs/agents/triage-labels.md`
-
-## Linking & branch
-
-- story back-reference (in titles/bodies): `[STORY-XXX]`
-- plan back-reference (task → plan): `Part of #<plan>`
-- issue closure (PR → issue): `Fixes #N` / `Closes #N`
-- feature branch name: `issue-<N>-<slug>`
-
-## Git
-
-- default branch: *derive it* (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), don't assume `main`
-- merge strategy: `--merge` (preserve history; switch to `--squash` only if the project requires)
-
 ## Front-matter & format contract (test docs)
 
 - test-doc filename: `TS-NN-<slug>.md` in the tests dir
@@ -75,39 +50,6 @@ project's choice.
 - namespace: `test-framework`
 - spec anchor: the issue number the intent came from — recorded unhashed, traced by a human
 - default status: `green` (the audit's other state is `unbound`, maintained by `qa-review-bind`)
-
-## Docs & diagrams
-
-- README output: `README.md`
-- diagram policy: SVG source committed under `docs/diagrams/`, rendered to PNG under
-  `docs/diagrams/png/` via `make diagrams` (no Mermaid / inline diagram blocks)
-- diagrams dir: `docs/diagrams/` (SVG source) + `docs/diagrams/png/` (rendered) — also under Paths
-
-## Reports
-
-The words a gate report uses. The contract itself — the questions a report answers and
-why — is `.claude/rules/agent-report.md`; a unit resolves the wording from here.
-
-- verdict vocabulary: `PASS` · `REVISE` · `HAND BACK`
-- extra verdict (artifact review only): `CUT` — the artifact duplicates another or does
-  nothing useful; propose removal
-- section names: `Verdict` · `Findings` · `Checked` · `Not done` · `Unresolved` ·
-  `Trace` · `Next`
-- empty-section marker: `none` (a section with nothing to report says so; it is not dropped)
-- finding columns: `# · severity · location · what's wrong · smallest fix`
-- formats by medium: chat session → plain text, tables, ASCII diagrams · document or
-  issue → whatever renders there. For a *published* human-read doc the diagram policy
-  under Docs & diagrams applies instead.
-
-## Review semantics
-
-- canonical format (source of truth): `markdown`
-- live integrations: `GitHub` — tools the project genuinely uses; coupling to one listed
-  here is correct, not drift. (A downstream adds its own, e.g. Jira, Confluence, TestLink.)
-- deliverable (triggers a paired review): a unit that *produces or changes* an output —
-  by name (`create-`/`sync-`/`publish-`/`draft-`/`init-`) or as a producing gerund skill
-  (`planning-…`, `drafting-…`)
-- audience (human-read docs): engineers and newcomers
 
 ## Connected flow
 
