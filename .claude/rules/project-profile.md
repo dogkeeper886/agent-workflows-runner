@@ -52,7 +52,9 @@ project's choice.
 - test plan: `test-plan` (`#006b75`)
 - priority: `priority:high` · `priority:medium` · `priority:low`
 - type: `feature` · `enhancement` · `bug` · `docs`
-- status: `status:in-progress` · `status:needs-review` · `status:blocked`
+- status (pipeline position): `status:in-progress` · `status:needs-review` · `status:blocked`
+- triage state (readiness): `ready-for-agent` — applied upstream, and `ship-merge` is its only
+  exit. The five canonical roles and this project's strings: `docs/agents/triage-labels.md`
 
 ## Linking & branch
 
