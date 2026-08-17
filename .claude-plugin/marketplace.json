@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "agent-workflows-runner",
-      "description": "The whole QA lifecycle as slash commands: qa-plan and qa-cases author test docs, qa-bind binds each case to the executable that runs it, and qa-review-bind audits the pair for divergence. Each producer is paired with a review gate; every project-specific value resolves from that project's .claude/rules/project-profile.md. Requires the agent-workflows plugin for the shared report and profile-doctrine rules.",
+      "description": "Five skills that answer one question about a codebase: if every test passes, what is now known to work? analysis-sut derives what the system must do from the code, review-ci-system says what the tests prove and what they do not, create-test writes what is missing at system level or above, prune-test removes what only restates internal structure, and remove-stale-files clears what earlier versions of this plugin left behind. A YAML test runner ships alongside them for the end-to-end checks a project's own framework cannot reach.",
       "source": "./plugins/agent-workflows-runner",
       "category": "workflow",
       "homepage": "https://github.com/dogkeeper886/agent-workflows-runner"
