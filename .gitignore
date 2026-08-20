@@ -27,3 +27,6 @@ Thumbs.db
 # Logs
 *.log
 /tmp/
+
+# Secret values the leak check greps for — never committed
+.secrets

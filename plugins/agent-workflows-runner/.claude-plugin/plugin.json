@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "agent-workflows-runner",
-  "description": "The QA lifecycle (qa-*): plan what to test, author the test docs, bind each case to its executable, and audit the pair. Doctrine travels in this plugin — the flow, and connected-flow's rules for how a bound executable must be designed; a project's values stay in that project's .claude/rules/project-profile.md. Two prerequisites, both checked by setup-agent-runner: the agent-workflows plugin (once per user), whose report and profile-doctrine rules these commands cite, and the test framework itself (once per project), whose scripts qa-bind and qa-review-bind shell out to.",
+  "description": "Judges what a project's tests actually prove, rather than how many there are. Five skills: analysis-sut derives what the system must do from the code, review-ci-system classifies every test by what it is allowed to touch and says what passing proves, create-test writes what is missing at system level or above, prune-test removes what only restates internal structure, and remove-stale-files clears what earlier versions of this plugin left behind. Nothing is saved to a file that could go stale, and review-ci-system never writes or deletes. The repository also holds a YAML test runner for the end-to-end checks a project's own framework cannot make.",
   "author": {
     "name": "dogkeeper886"
   },

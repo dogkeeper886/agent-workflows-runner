@@ -1,0 +1,764 @@
+=========== src/postgres-store.ts ===========
+     1	import pg from 'pg'
+     2	
+     3	import type { Queries } from './queries.js'
+     4	import type {
+     5	  DocumentStore,
+     6	  ListedReferenceDocument,
+     7	  ReferenceDocument,
+     8	} from './reference-document.js'
+     9	import type { StoredRule } from './rule-set.js'
+    10	
+    11	/**
+    12	 * Whether an operator has applied `schema.sql` to this database. Asked outright
+    13	 * rather than read out of the error a missing table would raise: absence is told
+    14	 * from unreachability by what the database says about itself, never by matching
+    15	 * the text of a failure.
+    16	 */
+    17	async function hasSchema(queries: Queries): Promise<boolean> {
+    18	  const rows = await queries.run(
+    19	    "select 1 from information_schema.tables where table_name = 'rules'",
+    20	  )
+    21	
+    22	  return rows.length > 0
+    23	}
+    24	
+    25	/**
+    26	 * The enabled Exceptions, gathered under the Rule each belongs to. Read in a
+    27	 * statement of its own rather than joined: a Rule with no Exception is the
+    28	 * common one, and a join would answer for it with a row of nulls to tell apart
+    29	 * from a row carrying a phrase.
+    30	 */
+    31	async function exceptionsByRule(queries: Queries): Promise<Map<number, string[]>> {
+    32	  const rows = await queries.run(
+    33	    'select rule, phrase from rule_exceptions where enabled order by id',
+    34	  )
+    35	  const byRule = new Map<number, string[]>()
+    36	
+    37	  for (const row of rows) {
+    38	    const rule = Number(row.rule)
+    39	    const phrases = byRule.get(rule)
+    40	
+    41	    if (phrases === undefined) {
+    42	      byRule.set(rule, [String(row.phrase)])
+    43	      continue
+    44	    }
+    45	
+    46	    phrases.push(String(row.phrase))
+    47	  }
+    48	
+    49	  return byRule
+    50	}
+    51	
+    52	/**
+    53	 * The database, read only. This project makes no write to it at all (ADR-0006),
+    54	 * so there is no method here that could relax a Rule or author a Reference
+    55	 * Document — the server holds an object that cannot do either.
+    56	 *
+    57	 * Absence is an answer rather than a failure: a document the database holds
+    58	 * nothing under answers `undefined`, where the database being unreachable
+    59	 * throws out of `pg` and reaches the caller as a server error.
+    60	 */
+    61	export class PostgresStore implements DocumentStore {
+    62	  constructor(private readonly queries: Queries) {}
+    63	
+    64	  /**
+    65	   * The enabled Rules, each carrying its enabled Exceptions. Read once at
+    66	   * startup and never again, which is the property ADR-0004 keeps: a running
+    67	   * server judges every Test Case by the Rules it started with.
+    68	   *
+    69	   * A disabled Rule is not read at all. It stops firing exactly as completely as
+    70	   * a deleted one would, and its row stays so a Violation logged against it can
+    71	   * still be explained (ADR-0007).
+    72	   *
+    73	   * A database the schema has never been applied to has no tables at all, which
+    74	   * is still "no Rules" and not an outage — so it answers none here and the
+    75	   * server says what to do, rather than dying on a missing table.
+    76	   */
+    77	  async rules(): Promise<StoredRule[]> {
+    78	    if (!(await hasSchema(this.queries))) {
+    79	      return []
+    80	    }
+    81	
+    82	    const rows = await this.queries.run(
+    83	      'select id, rule_id, content_kind, field, category, looks_for, flanked, reason from rules where enabled order by id',
+    84	    )
+    85	    const exceptions = await exceptionsByRule(this.queries)
+    86	
+    87	    return rows.map((row) => ({
+    88	      ruleId: String(row.rule_id),
+    89	      contentKind: String(row.content_kind),
+    90	      field: String(row.field),
+    91	      category: String(row.category),
+    92	      looksFor: String(row.looks_for),
+    93	      // The column is nullable, and only a Symbol Rule ever carries it.
+    94	      flanked: row.flanked === null || row.flanked === undefined ? null : String(row.flanked),
+    95	      reason: String(row.reason),
+    96	      exceptions: exceptions.get(Number(row.id)) ?? [],
+    97	    }))
+    98	  }
+    99	
+   100	  async listDocuments(): Promise<ListedReferenceDocument[]> {
+   101	    const rows = await this.queries.run('select id, title from reference_documents order by id')
+   102	
+   103	    return rows.map((row) => ({ id: String(row.id), title: String(row.title) }))
+   104	  }
+   105	
+   106	  async getDocument(id: string): Promise<ReferenceDocument | undefined> {
+   107	    const [row] = await this.queries.run(
+   108	      'select title, body from reference_documents where id = $1',
+   109	      [id],
+   110	    )
+   111	
+   112	    return row === undefined ? undefined : { title: String(row.title), body: String(row.body) }
+   113	  }
+   114	}
+   115	
+   116	/** What this project needs of a connected client, which is one method of it. */
+   117	interface Connected {
+   118	  query(sql: string, parameters?: unknown[]): Promise<{ rows: unknown[] }>
+   119	}
+   120	
+   121	/**
+   122	 * Puts a connected client behind the statements-and-rows seam everything above
+   123	 * speaks in. Exported so that a test running an in-process Postgres reaches it
+   124	 * through this same adapter rather than through a copy of it.
+   125	 */
+   126	export function queriesFrom(client: Connected): Queries {
+   127	  return {
+   128	    async run(sql: string, parameters?: unknown[]) {
+   129	      const { rows } = await client.query(sql, parameters)
+   130	      return rows as Record<string, unknown>[]
+   131	    },
+   132	  }
+   133	}
+   134	
+   135	/**
+   136	 * Opens the one connection this process needs. Narrow by design: everything
+   137	 * above it speaks in statements and rows, so the store is exercised without a
+   138	 * database and this is the only part that needs one.
+   139	 */
+   140	export async function connectToPostgres(url: string): Promise<Queries & { close(): Promise<void> }> {
+   141	  const client = new pg.Client({ connectionString: url })
+   142	
+   143	  await client.connect()
+   144	
+   145	  return { ...queriesFrom(client), close: () => client.end() }
+   146	}
+=========== src/queries.ts ===========
+     1	/**
+     2	 * The path to the database, one statement at a time. Narrow on purpose: it is
+     3	 * the seam that lets the real store be exercised — the statements it runs, the
+     4	 * parameters it sends, and how it reads what comes back — without a database.
+     5	 *
+     6	 * Parameters are sent separately from the statement rather than written into
+     7	 * it, so a document id a caller supplies is data and never SQL.
+     8	 */
+     9	export interface Queries {
+    10	  run(sql: string, parameters?: unknown[]): Promise<Record<string, unknown>[]>
+    11	}
+=========== src/testlink-client.ts ===========
+     1	/** A Test Case as submitted for validation and written through to TestLink. */
+     2	export interface TestCase {
+     3	  name: string
+     4	  summary: string
+     5	  preconditions?: string
+     6	}
+     7	
+     8	/**
+     9	 * Where in TestLink a Test Case is created. Supplied per submission rather than
+    10	 * fixed at deployment: TestLink is the store the caller works in, so which
+    11	 * Project and which Test Suite a case belongs to is the caller's to say.
+    12	 */
+    13	export interface Placement {
+    14	  projectId: string
+    15	  suiteId: string
+    16	}
+    17	
+    18	/**
+    19	 * What a caller says about a Project it is creating. The prefix is stamped into
+    20	 * every Test Case external id the Project ever holds, and TestLink will not
+    21	 * change it afterwards, so it is set here and appears in no change.
+    22	 */
+    23	export interface NewProject {
+    24	  name: string
+    25	  prefix: string
+    26	  notes?: string
+    27	  active?: boolean
+    28	  isPublic?: boolean
+    29	  requirementsEnabled?: boolean
+    30	  testPriorityEnabled?: boolean
+    31	  automationEnabled?: boolean
+    32	  inventoryEnabled?: boolean
+    33	}
+    34	
+    35	/** What a caller may change about a Project. Its prefix is not among them. */
+    36	export interface ProjectChanges {
+    37	  name?: string
+    38	  notes?: string
+    39	  active?: boolean
+    40	  isPublic?: boolean
+    41	  color?: string
+    42	  requirementsEnabled?: boolean
+    43	  testPriorityEnabled?: boolean
+    44	  automationEnabled?: boolean
+    45	  inventoryEnabled?: boolean
+    46	}
+    47	
+    48	/**
+    49	 * What became of a Project delete. Deleting a Project takes every Suite, Test
+    50	 * Case, Plan, Build, Execution and Requirement under it with it, so TestLink
+    51	 * asks the caller to restate the Project's own prefix before it does. Getting
+    52	 * that restatement wrong is the caller's to correct — it is told apart from the
+    53	 * Project not being there, and from TestLink not answering, because all three
+    54	 * would otherwise arrive as the same failure.
+    55	 */
+    56	export type ProjectDeletion = 'deleted' | 'absent' | 'unconfirmed'
+    57	
+    58	/** What a caller says about a Test Suite it is creating. */
+    59	export interface NewTestSuite {
+    60	  name: string
+    61	  details?: string
+    62	}
+    63	
+    64	/** What a caller may change about a Test Suite. Where it sits is not one of them. */
+    65	export interface TestSuiteChanges {
+    66	  name?: string
+    67	  details?: string
+    68	}
+    69	
+    70	/**
+    71	 * What TestLink reports about its own structure — Projects, Test Suites, and
+    72	 * the Test Cases a Suite holds. Left unmodelled because no Rule binds to it: it
+    73	 * is served on through, not checked, so giving it a shape here would invent
+    74	 * vocabulary the project does not have.
+    75	 */
+    76	export type TestLinkContent = unknown
+    77	
+    78	/**
+    79	 * The path to TestLink, read and write. Substituted in tests so the HTTP
+    80	 * surface can be exercised without a TestLink instance.
+    81	 *
+    82	 * Absence is an answer everywhere it can happen: an operation naming something
+    83	 * TestLink holds nothing under answers `undefined`, or `false` where it has no
+    84	 * content to answer with. Only TestLink being unreachable throws. Reporting the
+    85	 * two apart here is what lets every route answer them apart, rather than
+    86	 * reading an error message to guess which happened.
+    87	 *
+    88	 * The client reports content and never a judgement about it: what fired on that
+    89	 * content is decided by the Rules, above this interface.
+    90	 */
+    91	export interface TestLinkClient {
+    92	  /** Answers the id TestLink gave the Test Case, or nothing where it holds no such Test Suite. */
+    93	  createTestCase(placement: Placement, testCase: TestCase): Promise<{ id: string } | undefined>
+    94	  getTestCase(id: string): Promise<TestCase | undefined>
+    95	  /** Answers whether the Test Case was there to update. */
+    96	  updateTestCase(id: string, testCase: TestCase): Promise<boolean>
+    97	  /** Answers whether the Test Case was there to delete. */
+    98	  deleteTestCase(id: string): Promise<boolean>
+    99	
+   100	  listProjects(): Promise<TestLinkContent>
+   101	  /** Answers the id TestLink gave the Project. */
+   102	  createProject(project: NewProject): Promise<{ id: string }>
+   103	  /** Answers whether the Project was there to update. */
+   104	  updateProject(projectId: string, changes: ProjectChanges): Promise<boolean>
+   105	  /** Deletes a Project and everything under it, once the caller has restated its prefix. */
+   106	  deleteProject(projectId: string, confirmPrefix: string): Promise<ProjectDeletion>
+   107	  /** The Test Suites directly under a Project, or under `parentSuiteId` where one is named. */
+   108	  listTestSuites(projectId: string, parentSuiteId?: string): Promise<TestLinkContent | undefined>
+   109	  listTestCasesInSuite(suiteId: string): Promise<TestLinkContent | undefined>
+   110	
+   111	  /** Answers the id TestLink gave the Test Suite, or nothing where it holds no such Project. */
+   112	  createTestSuite(
+   113	    projectId: string,
+   114	    suite: NewTestSuite,
+   115	    parentSuiteId?: string,
+   116	  ): Promise<{ id: string } | undefined>
+   117	  /** Answers whether the Test Suite was there to update. */
+   118	  updateTestSuite(
+   119	    projectId: string,
+   120	    suiteId: string,
+   121	    changes: TestSuiteChanges,
+   122	  ): Promise<boolean>
+   123	  /** Answers whether the Test Suite was there to delete. */
+   124	  deleteTestSuite(suiteId: string): Promise<boolean>
+   125	}
+=========== src/tool-caller.ts ===========
+     1	/**
+     2	 * What one testlink-mcp tool call answered. The server replies in text whether
+     3	 * the call worked or not, so `isError` is the only structural signal there is —
+     4	 * everything finer is read out of the text by the client above.
+     5	 */
+     6	export interface ToolResult {
+     7	  text: string
+     8	  isError: boolean
+     9	}
+    10	
+    11	/**
+    12	 * The path to testlink-mcp, one tool call at a time. Narrow on purpose: it is
+    13	 * the seam that lets the real TestLink client be exercised — the tools it
+    14	 * calls, the arguments it sends, and how it reads what comes back — without a
+    15	 * TestLink instance or a spawned process.
+    16	 */
+    17	export interface ToolCaller {
+    18	  call(tool: string, args: Record<string, unknown>): Promise<ToolResult>
+    19	}
+=========== src/stdio-tool-caller.ts ===========
+     1	import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+     2	import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+     3	
+     4	import type { ToolCaller, ToolResult } from './tool-caller.js'
+     5	
+     6	/**
+     7	 * Speaks to a testlink-mcp process over stdio. testlink-mcp answers in text
+     8	 * whether a call worked or not, so all this does is put that text and the one
+     9	 * structural signal beside it in reach of the client above — every reading of
+    10	 * what TestLink said happens there, where it can be exercised without a process.
+    11	 */
+    12	export async function connectToTestLinkMcp(server: {
+    13	  command: string
+    14	  args: string[]
+    15	  env: Record<string, string>
+    16	}): Promise<ToolCaller> {
+    17	  const client = new Client({ name: 'testcase-validator', version: '0.0.0' })
+    18	
+    19	  await client.connect(new StdioClientTransport(server))
+    20	
+    21	  return {
+    22	    async call(tool: string, args: Record<string, unknown>): Promise<ToolResult> {
+    23	      const result = await client.callTool({ name: tool, arguments: args })
+    24	
+    25	      return { text: textOf(result.content), isError: result.isError === true }
+    26	    },
+    27	  }
+    28	}
+    29	
+    30	/** What testlink-mcp said, which it says as text and nothing else. */
+    31	function textOf(content: unknown): string {
+    32	  if (!Array.isArray(content)) {
+    33	    return ''
+    34	  }
+    35	
+    36	  return content
+    37	    .filter((part): part is { type: 'text'; text: string } => part?.type === 'text')
+    38	    .map((part) => part.text)
+    39	    .join('')
+    40	}
+=========== src/mcp-testlink-client.ts ===========
+     1	import type {
+     2	  NewProject,
+     3	  NewTestSuite,
+     4	  Placement,
+     5	  ProjectChanges,
+     6	  ProjectDeletion,
+     7	  TestCase,
+     8	  TestLinkClient,
+     9	  TestLinkContent,
+    10	  TestSuiteChanges,
+    11	} from './testlink-client.js'
+    12	import type { ToolCaller } from './tool-caller.js'
+    13	
+    14	/**
+    15	 * The real path to TestLink, through the testlink-mcp tools. Everything this
+    16	 * client does is one tool call and one reading of what came back, so the whole
+    17	 * of its judgement is in `answer` below: which failures are something that is
+    18	 * not there, and which are TestLink not answering at all.
+    19	 */
+    20	export class McpTestLinkClient implements TestLinkClient {
+    21	  constructor(
+    22	    private readonly tools: ToolCaller,
+    23	    /** Who the validator writes as. The one piece of TestLink identity a caller does not supply. */
+    24	    private readonly config: { authorLogin: string },
+    25	  ) {}
+    26	
+    27	  async createTestCase(
+    28	    { projectId, suiteId }: Placement,
+    29	    testCase: TestCase,
+    30	  ): Promise<{ id: string } | undefined> {
+    31	    const written = await this.answer('create_test_case', {
+    32	      data: {
+    33	        testprojectid: projectId,
+    34	        testsuiteid: suiteId,
+    35	        name: testCase.name,
+    36	        authorlogin: this.config.authorLogin,
+    37	        ...fieldsOf(testCase),
+    38	      },
+    39	    })
+    40	
+    41	    if (written === absent) {
+    42	      return undefined
+    43	    }
+    44	
+    45	    return { id: idOf(written, 'the Test Case it created') }
+    46	  }
+    47	
+    48	  async getTestCase(id: string): Promise<TestCase | undefined> {
+    49	    const held = await this.answer('read_test_case', { test_case_id: id })
+    50	
+    51	    if (held === absent) {
+    52	      return undefined
+    53	    }
+    54	
+    55	    // TestLink answers a read with the versions of a Test Case, and holds far
+    56	    // more about one than this project has Rules for. What is served is the
+    57	    // Fields, so a read answers a Test Case rather than a TestLink record.
+    58	    const version = first(held)
+    59	
+    60	    if (version === undefined) {
+    61	      return undefined
+    62	    }
+    63	
+    64	    return {
+    65	      name: text(version.name),
+    66	      summary: text(version.summary),
+    67	      preconditions: text(version.preconditions),
+    68	    }
+    69	  }
+    70	
+    71	  async updateTestCase(id: string, testCase: TestCase): Promise<boolean> {
+    72	    // A Field the caller left out is left out of the update: testlink-mcp
+    73	    // ignores an empty one, so an omission cannot clear what TestLink holds.
+    74	    const applied = await this.answer('update_test_case', {
+    75	      test_case_id: id,
+    76	      data: { name: testCase.name, ...fieldsOf(testCase) },
+    77	    })
+    78	
+    79	    return applied !== absent
+    80	  }
+    81	
+    82	  async deleteTestCase(id: string): Promise<boolean> {
+    83	    return (await this.answer('delete_test_case', { test_case_id: id })) !== absent
+    84	  }
+    85	
+    86	  async listProjects(): Promise<TestLinkContent> {
+    87	    const listed = await this.answer('list_projects', {})
+    88	
+    89	    if (listed === absent) {
+    90	      // Nothing was named to be missing, so TestLink reporting absence here is
+    91	      // TestLink not making sense rather than an answer a caller can act on.
+    92	      throw new Error('TestLink reported no Projects to list.')
+    93	    }
+    94	
+    95	    return listed
+    96	  }
+    97	
+    98	  async createProject(project: NewProject): Promise<{ id: string }> {
+    99	    const created = await this.answer('create_project', {
+   100	      name: project.name,
+   101	      prefix: project.prefix,
+   102	      ...settingsOf(project),
+   103	    })
+   104	
+   105	    if (created === absent) {
+   106	      // Nothing was named to be missing, so this is TestLink not making sense
+   107	      // rather than an answer a caller could act on.
+   108	      throw new Error('TestLink reported the Project it was asked to create as missing.')
+   109	    }
+   110	
+   111	    return { id: idOf(created, 'the Project it created') }
+   112	  }
+   113	
+   114	  async updateProject(projectId: string, changes: ProjectChanges): Promise<boolean> {
+   115	    const applied = await this.answer('update_project', {
+   116	      project_id: projectId,
+   117	      ...given({ name: changes.name }),
+   118	      ...settingsOf(changes),
+   119	    })
+   120	
+   121	    return applied !== absent
+   122	  }
+   123	
+   124	  async deleteProject(projectId: string, confirmPrefix: string): Promise<ProjectDeletion> {
+   125	    const deleted = await this.answer(
+   126	      'delete_project',
+   127	      { project_id: projectId, confirm_prefix: confirmPrefix },
+   128	      // The interlock refusing is the caller's to correct, so it is read here
+   129	      // rather than escalated: a caller told TestLink is down restates nothing.
+   130	      reportsUnconfirmed,
+   131	    )
+   132	
+   133	    if (deleted === unconfirmed) {
+   134	      return 'unconfirmed'
+   135	    }
+   136	
+   137	    return deleted === absent ? 'absent' : 'deleted'
+   138	  }
+   139	
+   140	  async listTestSuites(
+   141	    projectId: string,
+   142	    parentSuiteId?: string,
+   143	  ): Promise<TestLinkContent | undefined> {
+   144	    return this.listed('list_test_suites', {
+   145	      project_id: projectId,
+   146	      ...given({ parent_suite_id: parentSuiteId }),
+   147	    })
+   148	  }
+   149	
+   150	  async listTestCasesInSuite(suiteId: string): Promise<TestLinkContent | undefined> {
+   151	    return this.listed('list_test_cases_in_suite', { suite_id: suiteId })
+   152	  }
+   153	
+   154	  async createTestSuite(
+   155	    projectId: string,
+   156	    suite: NewTestSuite,
+   157	    parentSuiteId?: string,
+   158	  ): Promise<{ id: string } | undefined> {
+   159	    const created = await this.answer('create_test_suite', {
+   160	      project_id: projectId,
+   161	      suite_name: suite.name,
+   162	      ...given({ details: suite.details, parent_id: parentSuiteId }),
+   163	    })
+   164	
+   165	    if (created === absent) {
+   166	      return undefined
+   167	    }
+   168	
+   169	    return { id: idOf(created, 'the Test Suite it created') }
+   170	  }
+   171	
+   172	  async updateTestSuite(
+   173	    projectId: string,
+   174	    suiteId: string,
+   175	    changes: TestSuiteChanges,
+   176	  ): Promise<boolean> {
+   177	    const applied = await this.answer('update_test_suite', {
+   178	      suite_id: suiteId,
+   179	      project_id: projectId,
+   180	      data: changes,
+   181	    })
+   182	
+   183	    return applied !== absent
+   184	  }
+   185	
+   186	  async deleteTestSuite(suiteId: string): Promise<boolean> {
+   187	    return (await this.answer('delete_test_suite', { suite_id: suiteId })) !== absent
+   188	  }
+   189	
+   190	  /**
+   191	   * A listing of what TestLink holds under something the caller named. The
+   192	   * thing named not being there is an answer, the same as it is for a read:
+   193	   * a caller listing the Suites of a Project that is not there has an id to
+   194	   * correct, not an outage to escalate.
+   195	   */
+   196	  private async listed(
+   197	    tool: string,
+   198	    args: Record<string, unknown>,
+   199	  ): Promise<TestLinkContent | undefined> {
+   200	    const listed = await this.answer(tool, args)
+   201	
+   202	    return listed === absent ? undefined : listed
+   203	  }
+   204	
+   205	  /**
+   206	   * One tool call, read as one of three outcomes: what TestLink answered, the
+   207	   * thing named not being there, or a throw for everything else.
+   208	   *
+   209	   * Absence is read only out of what TestLink reported about the call — the
+   210	   * error it replied with, or the code-and-message it sometimes puts where a
+   211	   * result should go. It is never read out of served content, because a Test
+   212	   * Case is entitled to be about a file that does not exist and reading its own
+   213	   * words back as absence would make it disappear.
+   214	   *
+   215	   * Anything unreadable throws, so an unrecognised failure escalates as an
+   216	   * outage rather than being answered as absence: a caller told a Test Case is
+   217	   * not there stops looking for it.
+   218	   *
+   219	   * `alsoTheCallers` names one further failure this particular call's caller can
+   220	   * correct, for the calls that have one. It is read before absence, so a call
+   221	   * that fails for its own reason is not first mistaken for something missing.
+   222	   */
+   223	  private async answer(
+   224	    tool: string,
+   225	    args: Record<string, unknown>,
+   226	    alsoTheCallers?: (message: string) => boolean,
+   227	  ): Promise<TestLinkContent | typeof absent | typeof unconfirmed> {
+   228	    const result = await this.tools.call(tool, args)
+   229	
+   230	    if (result.isError) {
+   231	      return this.place(tool, result.text, alsoTheCallers)
+   232	    }
+   233	
+   234	    const content: unknown = JSON.parse(result.text)
+   235	    const reported = reportedProblem(content)
+   236	
+   237	    if (reported !== undefined) {
+   238	      return this.place(tool, reported, alsoTheCallers)
+   239	    }
+   240	
+   241	    const denied = deniedIn(content)
+   242	
+   243	    if (denied !== undefined) {
+   244	      throw new Error(`TestLink did not complete ${tool}: ${denied}`)
+   245	    }
+   246	
+   247	    return content
+   248	  }
+   249	
+   250	  /**
+   251	   * Which of the outcomes a caller can act on this failure is, or none of them,
+   252	   * in which case it escalates. Escalating is the default deliberately: a
+   253	   * failure nobody has taught this client to read is an outage until someone
+   254	   * has, because answering it as absence would send a caller away.
+   255	   */
+   256	  private place(
+   257	    tool: string,
+   258	    message: string,
+   259	    alsoTheCallers?: (message: string) => boolean,
+   260	  ): typeof absent | typeof unconfirmed {
+   261	    if (alsoTheCallers?.(message) === true) {
+   262	      return unconfirmed
+   263	    }
+   264	
+   265	    if (reportsMissingTool(message)) {
+   266	      throw new Error(
+   267	        `testlink-mcp does not provide ${tool}, so it is older than the ${expectedTestLinkMcp} this client calls: ${message}`,
+   268	      )
+   269	    }
+   270	
+   271	    if (reportsAbsence(message)) {
+   272	      return absent
+   273	    }
+   274	
+   275	    throw new Error(`TestLink could not be reached through ${tool}: ${message}`)
+   276	  }
+   277	}
+   278	
+   279	/** TestLink holds nothing under what the call named. */
+   280	const absent = Symbol('absent')
+   281	
+   282	/** The caller did not restate the Project's prefix, so TestLink deleted nothing. */
+   283	const unconfirmed = Symbol('unconfirmed')
+   284	
+   285	/**
+   286	 * The interlock refusing. TestLink asks a caller deleting a Project to restate
+   287	 * its prefix, and says so in its own words when the restatement does not match.
+   288	 */
+   289	function reportsUnconfirmed(message: string): boolean {
+   290	  return /Confirmation failed/i.test(message)
+   291	}
+   292	
+   293	/**
+   294	 * The arguments the caller actually gave, so an omission is left unsent rather
+   295	 * than sent empty. Only an omission is dropped: `false` and an empty string are
+   296	 * things a caller said, and a setting turned off has to reach TestLink as one.
+   297	 */
+   298	function given(args: Record<string, unknown>): Record<string, unknown> {
+   299	  return Object.fromEntries(Object.entries(args).filter(([, value]) => value !== undefined))
+   300	}
+   301	
+   302	/** The settings of a Project, as testlink-mcp names them. */
+   303	function settingsOf(project: NewProject | ProjectChanges): Record<string, unknown> {
+   304	  return given({
+   305	    notes: project.notes,
+   306	    active: project.active,
+   307	    is_public: project.isPublic,
+   308	    color: 'color' in project ? project.color : undefined,
+   309	    requirements_enabled: project.requirementsEnabled,
+   310	    test_priority_enabled: project.testPriorityEnabled,
+   311	    automation_enabled: project.automationEnabled,
+   312	    inventory_enabled: project.inventoryEnabled,
+   313	  })
+   314	}
+   315	
+   316	/** The Fields carrying content, as testlink-mcp takes them. */
+   317	function fieldsOf(testCase: TestCase): Record<string, string> {
+   318	  return { summary: testCase.summary, ...given({ preconditions: testCase.preconditions }) }
+   319	}
+   320	
+   321	/**
+   322	 * The id TestLink gave what it just created. TestLink reports it either at the
+   323	 * top of the result or in what it says about the operation, so both are read —
+   324	 * and a result carrying neither is a write that did not land, however
+   325	 * successfully it was phrased. Answering an id here is what makes the write
+   326	 * complete, so there is nothing to answer when TestLink named none.
+   327	 */
+   328	function idOf(content: TestLinkContent, subject: string): string {
+   329	  const created = first(content)
+   330	  const reported = record(created?.additionalInfo)
+   331	  const id = created?.id ?? reported?.id
+   332	
+   333	  // `0` and the empty string are ids nothing is held under, so they are read as
+   334	  // the absence of one rather than passed back for a caller to read with.
+   335	  if ((typeof id !== 'string' && typeof id !== 'number') || String(id) === '' || Number(id) === 0) {
+   336	    throw new Error(`TestLink reported no id for ${subject}: ${JSON.stringify(content)}`)
+   337	  }
+   338	
+   339	  return String(id)
+   340	}
+   341	
+   342	/**
+   343	 * The problem TestLink reported about a call it did not refuse outright.
+   344	 * TestLink answers some failures as a code and a message where the result
+   345	 * should be, rather than as an error, so both readings meet here. A reply
+   346	 * carrying no code is content, and is never read for a problem.
+   347	 */
+   348	function reportedProblem(content: unknown): string | undefined {
+   349	  const reported = first(content)
+   350	
+   351	  if (reported?.code === undefined || typeof reported.message !== 'string') {
+   352	    return undefined
+   353	  }
+   354	
+   355	  return reported.message
+   356	}
+   357	
+   358	/**
+   359	 * TestLink saying the operation did not happen. A write answers a caller only
+   360	 * once TestLink has confirmed it, and a reply that denies the write is not a
+   361	 * confirmation however cleanly it arrived. Only an explicit denial counts: a
+   362	 * reply that says nothing about status — every listing, and a read — is not
+   363	 * read as one.
+   364	 */
+   365	function deniedIn(content: unknown): string | undefined {
+   366	  const reported = first(content)
+   367	
+   368	  if (reported?.status !== false) {
+   369	    return undefined
+   370	  }
+   371	
+   372	  return typeof reported.message === 'string'
+   373	    ? reported.message
+   374	    : 'TestLink gave no reason for it.'
+   375	}
+   376	
+   377	/**
+   378	 * Whether TestLink is reporting that what the call named is not there. Two
+   379	 * wordings, because two things do the reporting: TestLink says a thing "does
+   380	 * not exist", and testlink-mcp says "not found" for the Projects it resolves
+   381	 * itself before calling TestLink at all. Both are matched narrowly, because
+   382	 * everything this does not match is escalated as an outage instead.
+   383	 */
+   384	function reportsAbsence(message: string): boolean {
+   385	  return /does not exist|not found/i.test(message)
+   386	}
+   387	
+   388	/**
+   389	 * The testlink-mcp this client is written against. It lives here because it is
+   390	 * the client that knows which tools it calls, and it is what launching the
+   391	 * server pins to, so the two cannot drift apart.
+   392	 */
+   393	export const expectedTestLinkMcp = '1.6.0'
+   394	
+   395	/**
+   396	 * Whether testlink-mcp is reporting a tool it does not have. A server older
+   397	 * than the version above answers this rather than failing anything in TestLink,
+   398	 * so it is the version showing through and not a word about TestLink, which is
+   399	 * reachable and healthy in every case that reaches here.
+   400	 */
+   401	function reportsMissingTool(message: string): boolean {
+   402	  return /Unknown tool/i.test(message)
+   403	}
+   404	
+   405	/** What TestLink sent, whether it sent one or a list of them. */
+   406	function first(content: unknown): Record<string, unknown> | undefined {
+   407	  return record(Array.isArray(content) ? content[0] : content)
+   408	}
+   409	
+   410	function record(value: unknown): Record<string, unknown> | undefined {
+   411	  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined
+   412	}
+   413	
+   414	/** A Field as it is served: what TestLink holds, and empty where it holds nothing. */
+   415	function text(value: unknown): string {
+   416	  return typeof value === 'string' ? value : ''
+   417	}

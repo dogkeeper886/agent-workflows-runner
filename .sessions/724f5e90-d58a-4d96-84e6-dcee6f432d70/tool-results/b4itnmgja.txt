@@ -1,0 +1,321 @@
+# `analysis-sut` — /home/jack/src/testcase-validator
+
+Ground truth read first (src/*.ts, package.json, schema.sql, default-rules.sql, docker-compose.yml, tsconfig.json, .mcp.json.example, git log). Docs read last, in step 6 only. `test/` never opened. `docs/sessions/` and `docs/agents/` excluded per the mid-task amendment.
+
+---
+
+## Step 2–4 record (settling the list)
+
+**#1 candidate found before enumeration:** this is a *validation gateway* — an HTTP server that is the only way an AI agent reaches TestLink, and the whole of it is one ordered pipeline of refusals over two dependencies (a read-only Postgres holding the Rules, and TestLink reached over stdio through `testlink-mcp`).
+
+**Absorption question, run twice.**
+
+- Run 1, over a three-item list (gateway / rules-are-rows / MCP client readings): **yes** — the actual matching semantics (Term-as-word vs Symbol-as-character, `flanked`, per-Rule Exception spans) were explained only inside #1's "Rules stage". Promoted to #4.
+- Run 2, over the four-item list: **no** remaining behaviour is explained only inside another's mechanism. Two candidates were checked and resolved rather than promoted: the "server never writes to its own database / Reference Documents are read-only" property is the same lifecycle claim as #2 seen from the other end and stays there; the `confirmPrefix` interlock is split across #1 (schema refusal) and #3 (409), so it is not hidden inside either.
+
+**Count check: 4 key points, 4 diagrams drawn. Equal.**
+
+---
+
+# #1
+
+**Key point.** Every write travels three refusals in a fixed order — Fastify JSON Schema, then the bound Rules, then the `testlink-mcp` call — and nothing reaches TestLink until all three clear; reads travel none of them and are never refused, they carry what fired beside the content they serve. The three refusals answer in three distinguishable shapes (`400 {refusal:'schema'}`, `422 {violations}`, `404 {message}`), so a caller never has to read a string to know which stage stopped it.
+
+**Ground truth.**
+- `/home/jack/src/testcase-validator/src/app.ts` (whole file; schemas lines 26–126, `reject` 179–185, `setErrorHandler` 188–193, `nothingThere` 201–202, routes 204–431)
+- `/home/jack/src/testcase-validator/src/violation.ts`
+- `/home/jack/src/testcase-validator/src/testlink-client.ts` (the `TestLinkClient` interface, lines 91–125)
+- `/home/jack/src/testcase-validator/src/server.ts` (lines 79–88, composition)
+
+**Mechanism.** `buildApp({testlink, documents, rules, logger})` builds Fastify with `ajv.customOptions.coerceTypes: false`. `testCaseSchema` (`required: ['name','summary']`, `additionalProperties: false`) is attached as `schema.body` on `POST /projects/:projectId/suites/:suiteId/test-cases` and `PUT /test-cases/:id`. A schema failure reaches `setErrorHandler`, which sees `error.validation` and answers `400 {refusal:'schema', message}` — carrying no `violations` key, so it cannot be misread as a Rejection. Otherwise `findViolations(request.body, bound.testCase)` runs; a non-empty array goes to `reject()`, which emits one `request.log.warn({ruleSetVersion, field, rule}, 'Rule violated')` per Violation and answers `422 versioned({violations})`. Only then is `testlink.createTestCase` / `updateTestCase` called. `undefined`/`false` back from the client becomes `nothingThere(reply, ...)` → `404 {message: 'TestLink holds no ...'}`. Success is `201 versioned(written)` or `200 versioned({id})`. Reads (`GET /test-cases/:id`, `GET /reference-documents/:id`) call `findViolations` too but always send `200` with `{testCase|document, violations}` — the Violations sit beside the content, never merged into it. `GET/POST/PUT/DELETE` on `/projects` and `/projects/:projectId/suites/...` run schema only: no Rule binds to a Project or a Suite.
+
+**Why it matters.** This ordering is the product. If the Rules stage could be reached after the write, or if a Rejection could be confused with a schema refusal or with absence, the whole trust-boundary argument collapses — the agent would have a way to get unchecked prose into TestLink, or a way to read "not there" as "rejected" and stop trying.
+
+**Diagram.**
+
+```
+ agent (HTTP)
+     │
+     ▼  POST /projects/:projectId/suites/:suiteId/test-cases
+ ┌─────────────────────────────────────────────────────────┐
+ │ (1) Fastify ajv, testCaseSchema, coerceTypes:false      │
+ │     fail ──► setErrorHandler ──► 400 {refusal:'schema'} │──┐
+ ├─────────────────────────────────────────────────────────┤  │
+ │ (2) findViolations(body, bound.testCase)                │  │ nothing
+ │     len>0 ──► reject(): log.warn ×n ──► 422 {violations}│──┤ written
+ ├─────────────────────────────────────────────────────────┤  │
+ │ (3) testlink.createTestCase(...)  ── undefined ──► 404  │──┘
+ │                                   ── {id}      ──► 201  │──► TestLink
+ └─────────────────────────────────────────────────────────┘
+
+ GET /test-cases/:id ── no refusal stage ──► 200 {testCase, violations}
+ GET /reference-documents/:id ─────────────► 200 {document, violations}
+```
+
+**Contradicts.** Nothing in #1 contradicts the docs. README lines 3–6, 220–231 and 344–346 describe exactly this ordering and these two response shapes.
+
+**Paths.**
+
+- **1a.** POST a Test Case body carrying an extra key (`{"name","summary","title"}`) → `additionalProperties:false` → `400 {refusal:'schema'}` and **no** `violations` key → **the named Test Suite in TestLink holds no Test Case by that name** (query TestLink for the suite's cases). *NOT fake-assertable* — a stub can only report that `createTestCase` was not called.
+- **1b.** POST a Test Case whose `summary` holds an em dash → `422 {violations:[{field:'summary',rule:'no-em-dash',...}], ruleSetVersion}` → **TestLink's case count under that suite is unchanged**. *NOT fake-assertable.*
+- **1c.** POST a clean Test Case → `201 {id, ruleSetVersion}` → **`GET /test-cases/{that id}` returns the same `name`/`summary`/`preconditions`, i.e. the id answered with is the id a read answers to**. *NOT fake-assertable* (a stub invents its own id).
+- **1d.** POST with `summary: 5` (number) → coercion is off → `400` → **nothing in TestLink, and no case with summary "5"**. *NOT fake-assertable.*
+- **1e.** PUT `/test-cases/:id` over an existing case with a violating body → `422` → **the Test Case in TestLink still holds its previous `name` and `summary` verbatim**. *NOT fake-assertable* — this is the one that proves a Rejection is not a partial write.
+- **1f.** PUT the same violating body twice → two byte-identical `422` bodies → **TestLink unchanged after both**. *NOT fake-assertable* (the identical-body half alone is fake-assertable).
+- **1g.** GET `/test-cases/:id` for a case stored in TestLink that violates several Rules → `200`, content served unchanged, `violations` beside it → **the TestLink record is byte-identical after the read** (a read must not rewrite). *NOT fake-assertable.*
+- **1h.** POST `/projects/:projectId/suites` with `{"name":"S","parentSuiteId":"X"}` → schema passes, no Rule runs → `201` → **TestLink shows the new Suite nested under suite X, not at project root**. *NOT fake-assertable.*
+- **1i.** PUT `/projects/:projectId` with `{}` → `minProperties:1` → `400 {refusal:'schema'}` → **the Project's settings in TestLink are unchanged**. *NOT fake-assertable.*
+- **1j.** A violating POST produces exactly one `log.warn` line per Violation, each carrying `ruleSetVersion`, `field`, `rule`. *Fake-assertable.*
+
+---
+
+# #2
+
+**Key point.** Startup is the gate, and after it the database is a read-only input that no request can change. The server reads its Rules from `rules`/`rule_exceptions` **once**, refuses to start on a missing setting, on an empty result, or on any row it cannot bind — and afterwards nothing in the process can write a Rule or a Reference Document, so the `Rule-Set-Version` derived from those rows is fixed for the life of the process and rides on every single answer.
+
+**Ground truth.**
+- `/home/jack/src/testcase-validator/src/server.ts` (lines 12–26 read-once and the empty refusal; 40–68 `testLinkMcp()`; 70–88)
+- `/home/jack/src/testcase-validator/src/setting.ts`
+- `/home/jack/src/testcase-validator/src/postgres-store.ts` (`hasSchema` 17–23, `exceptionsByRule` 31–50, `PostgresStore.rules` 77–98, `getDocument` 106–113, `connectToPostgres` 140–146)
+- `/home/jack/src/testcase-validator/src/queries.ts`
+- `/home/jack/src/testcase-validator/src/rule-set.ts` (`checkStoredRule` 125–179, `checkRules` 189–215, `bindRules` 222–230, `refuse` 236–240, `ruleSetVersionOf` 259–277)
+- `/home/jack/src/testcase-validator/src/reference-document.ts` (the `DocumentStore` interface — two methods, both reads)
+- `/home/jack/src/testcase-validator/schema.sql`, `/home/jack/src/testcase-validator/default-rules.sql`
+- `/home/jack/src/testcase-validator/src/app.ts` lines 152, 160–171, 409–431
+
+**Mechanism.** `server.ts` top-level `await`s: `connectToPostgres(required('DATABASE_URL'))` → `new PostgresStore(...)` → `await store.rules()`. `rules()` first asks `select 1 from information_schema.tables where table_name='rules'` (`hasSchema`) so an un-applied schema answers `[]` rather than throwing; then `select ... from rules where enabled order by id` plus a separate `select rule, phrase from rule_exceptions where enabled order by id` folded into a `Map<number,string[]>` keyed by `rules.id`. Zero rows → the explicit `throw new Error('No enabled Rules are in the database, so the server will not start. Apply schema.sql and insert a Rule ...')`. Inside `buildApp`, `bindRules(rules)` runs `checkStoredRule` over every row and `refuse()`s with *all* problems joined, before Fastify exists. `ruleSetVersionOf(rules)` is a sha256, sliced to 12 hex chars, over `JSON.stringify([contentKind, field, ruleId, category, looksFor, flanked, reason, sortedExceptions])` per row, `.sort()`ed then newline-joined — so row `id` and database ordering are excluded, and disabled rows never reach it. An `onSend` hook stamps `Rule-Set-Version` on *every* reply including the `204`s; `versioned()` puts `ruleSetVersion` in the body only where Rules took part. The whole write direction is absent by construction: `PostgresStore` has `rules`, `listDocuments`, `getDocument` and nothing else, and `DocumentStore` declares only the two reads. `schema.sql` and `default-rules.sql` are operator-applied (`psql -f`), never referenced from `src/`.
+
+**Why it matters.** Two guarantees stand on this and nothing else: a running server cannot be talked into loosening a Rule (there is no object in the process that can write one), and a Violation reported today can still be explained tomorrow (the version names the exact Rules that judged it). Both are unfalsifiable without a real database — the write-absence claim is a claim about rows, not about method calls.
+
+**Diagram.**
+
+```
+  operator, out of band          the process, once, at startup
+  ────────────────────           ─────────────────────────────
+  psql -f schema.sql                required('DATABASE_URL')
+  psql -f default-rules.sql                   │
+        │  (445 rows, enabled)                ▼
+        ▼                          connectToPostgres ──► Queries.run
+  ┌──────────────────────┐                    │
+  │ validator-db :5433   │◄───── read only ───┤
+  │  rules               │                    ▼
+  │  rule_exceptions     │        hasSchema? ──no──► rules() = []
+  │  reference_documents │                    │yes            │
+  └──────────────────────┘        select .. where enabled     │
+        ▲   (per request, read)              │               │
+        │                                     ▼              ▼
+   GET /reference-documents ─────►  rules.length===0 ──► THROW, no listen
+   GET /reference-documents/:id      bindRules(rules) ──► THROW, no listen
+                                     ruleSetVersionOf(rules)
+                                              │
+                                    fixed for the process life
+                                              │
+   every reply ──── onSend ──► header Rule-Set-Version: <12 hex>
+   Rules took part ────────► body also carries ruleSetVersion
+```
+
+**Contradicts.** ADR-0006 (`docs/adr/0006-...md`, "Consequences") states **"YAML stays, as the storage format. Rule Sets are held as text in `rule_sets.source` and parsed at startup"**. There is no `rule_sets` table in `schema.sql`, no YAML parser in `src/`, and no YAML dependency in `package.json`. ADR-0007's addendum records the replacement ("Done in #26. The server reads `rules` and `rule_exceptions`, `rule_sets` is gone from the schema, and the YAML parser and its dependency went with it"), but ADR-0006 itself carries no superseded banner the way ADR-0005 does. Full list below.
+
+**Paths.**
+
+- **2a.** Boot against a validator-db with `schema.sql` applied and zero enabled rows → process exits with `No enabled Rules are in the database...` → **nothing is listening on `PORT`, and the `rules` table is still empty (startup wrote nothing)**. *NOT fake-assertable.*
+- **2b.** Boot against a completely fresh database (schema never applied) → `hasSchema` false → same refusal, **not** a "relation rules does not exist" stack trace → **the database still holds no tables**. *NOT fake-assertable* — needs a real Postgres with a real `information_schema`.
+- **2c.** Boot with `DATABASE_URL` unset → `required` throws `DATABASE_URL is not set, so this will not run.` → **no connection is opened and no listener is bound**. Message shape is fake-assertable; *NOT fake-assertable* for the no-connection/no-listener half.
+- **2d.** Insert `('x','testCase','body','term','foo','r')` into a `rules` table created **without** the CHECK constraints, then boot → `bindRules` refuses with `testCase / body / x: a Test Case has no Field by that name` → **no listener**. *NOT fake-assertable.*
+- **2e.** Insert that same row into a database with `schema.sql` as shipped → `field_belongs_to_the_content` refuses → **the row is absent from `rules`**. *NOT fake-assertable*, and specifically not assertable against a substitute SQL engine that does not enforce table CHECKs identically.
+- **2f.** Insert two invalid rows and boot → the error names **both**, joined, in one message → **no listener**. *NOT fake-assertable* for the listener half.
+- **2g.** Boot, note the `Rule-Set-Version` header, then `update rules set enabled=false where rule_id='no-em-dash'`, then POST content with an em dash → still `422`, still the **same** header value → **the row's `enabled` really is `false` in the database while the server ignores it**. *NOT fake-assertable* — this is the read-once guarantee and only a real row can prove it.
+- **2h.** Restart after 2g → header changes; re-enable the row and restart again → header returns to the **original** value (version derived from content, not from row id or order). *NOT fake-assertable.*
+- **2i.** Exercise every write route successfully (create/update/delete Test Case, Project, Suite) → **`rules`, `rule_exceptions` and `reference_documents` are row-for-row, byte-for-byte identical before and after**. *NOT fake-assertable* — this is the ADR-0006 "no write path" claim, and no substituted store can fail to write to something real.
+- **2j.** `GET /reference-documents/:id` for a document whose body holds a curly apostrophe → `200 {document, violations, ruleSetVersion}`, body served **unchanged** → **the `reference_documents` row is unchanged after the read**. *NOT fake-assertable.*
+- **2k.** `GET /reference-documents/nope` → `404 {message:'There is no Reference Document nope.'}`, no `violations`, no `ruleSetVersion` in the body, `Rule-Set-Version` header present → **`select ... where id='nope'` really returns no row**. Shape is fake-assertable; the "the table really holds nothing" half is *NOT fake-assertable.*
+- **2l.** `GET /reference-documents/:id` with `id = "x' or '1'='1"` → parameters go through `$1` → `404` → **`reference_documents` still holds all its rows and nothing was returned**. *NOT fake-assertable.*
+- **2m.** Stop validator-db, then `GET /reference-documents` → `pg` throws → `500` (not `404`, not an empty list) → **the database is genuinely down, and comes back with its rows intact**. *NOT fake-assertable* — a fake cannot be unreachable in the way a socket can.
+- **2n.** `DELETE /test-cases/:id` succeeding → `204`, empty body, `Rule-Set-Version` header still present. *Fake-assertable.*
+- **2o.** `POST /projects` succeeding → `201`, header present, body carries **no** `ruleSetVersion` (no Rule judged a Project). *Fake-assertable.*
+- **2p.** Apply `default-rules.sql` to a real Postgres → **445 rows in `rules`, all `enabled`, spread 89 per Field over five Fields**; disable one, apply the file again → **still 445 rows and that one still `enabled=false`** (`on conflict ... do nothing`). *NOT fake-assertable.*
+- **2q.** Boot against those 445 rows → every one binds, `bindRules` reports no problem, all ten Field Rule Sets are non-empty. *NOT fake-assertable* (needs the shipped file in a real database).
+
+---
+
+# #3
+
+**Key point.** One `testlink-mcp` tool call is read into four outcomes — content, *absent*, *unconfirmed*, or an outage — and the HTTP status code is decided entirely there. Absence is inferred only from what TestLink said **about the call** (`does not exist` / `not found` in an error or in a code-and-message where a result belongs), never from served content; a version mismatch (`Unknown tool`) throws naming `1.6.0`; a `status:false` reply or a create that reports no id throws even though the call "succeeded"; and everything unrecognised escalates as an outage rather than being answered as "not there".
+
+**Ground truth.**
+- `/home/jack/src/testcase-validator/src/mcp-testlink-client.ts` (`answer` 223–248, `place` 256–276, `absent`/`unconfirmed` 280–283, `reportsUnconfirmed` 289–291, `idOf` 328–340, `reportedProblem` 348–356, `deniedIn` 365–375, `reportsAbsence` 384–386, `expectedTestLinkMcp = '1.6.0'` 393, `reportsMissingTool` 401–403)
+- `/home/jack/src/testcase-validator/src/tool-caller.ts`, `/home/jack/src/testcase-validator/src/stdio-tool-caller.ts`
+- `/home/jack/src/testcase-validator/src/app.ts` lines 201–202, 221–223, 302–323
+- `/home/jack/src/testcase-validator/src/server.ts` lines 40–77 (the pinned `docker run ... testlink-mcp:1.6.0`)
+- `/home/jack/src/testcase-validator/.mcp.json.example`, `/home/jack/src/testcase-validator/docker-compose.yml` (the `dogkeeper886/testlink-code` fork, pinned `mcp-1.0.0`)
+
+**Mechanism.** `connectToTestLinkMcp` spawns the MCP server over `StdioClientTransport` and flattens its reply to `{text, isError}` — the only structural signal there is. `McpTestLinkClient.answer(tool, args, alsoTheCallers?)` calls it, then: `isError` → `place(tool, text, alsoTheCallers)`; otherwise `JSON.parse(result.text)` and `reportedProblem(content)` (first element carrying both a `code` and a string `message`) → `place(...)`; then `deniedIn(content)` (`status === false`) → `throw 'TestLink did not complete <tool>: ...'`; otherwise the content. `place` tries, in order: `alsoTheCallers` → `unconfirmed`; `reportsMissingTool` (`/Unknown tool/i`) → `throw 'testlink-mcp does not provide <tool>, so it is older than the 1.6.0 this client calls'`; `reportsAbsence` (`/does not exist|not found/i`) → `absent`; else `throw 'TestLink could not be reached through <tool>: ...'`. `deleteProject` is the only call passing `alsoTheCallers = reportsUnconfirmed` (`/Confirmation failed/i`) and answers the three-valued `ProjectDeletion`. `idOf` reads `first(content).id ?? first(content).additionalInfo.id` and throws when it is missing, `''` or `0` — "answering an id here is what makes the write complete". `listProjects` and `createProject` treat `absent` as nonsense and throw. In `app.ts`: `absent` becomes `404` via `nothingThere`, `'unconfirmed'` becomes `409`, and every throw becomes a Fastify `500`.
+
+**Why it matters.** These are the only failures the caller cannot see the cause of, and every one of them is decided by matching a *string another program produced*. Two regexes (`does not exist|not found`, `Confirmation failed`) carry the whole difference between "correct your id" (404), "restate the prefix" (409) and "escalate, TestLink is down" (500). A stub that is written to emit those strings proves that the regex matches the stub — nothing more.
+
+**Diagram.**
+
+```
+ route ──► McpTestLinkClient.<op> ──► ToolCaller.call(tool,args)
+                                          │  {text, isError}
+                                          ▼
+                            ┌── isError ──► place()
+   JSON.parse(text) ────────┤
+        │                   └── reportedProblem(): {code, message} ──► place()
+        ▼
+   deniedIn(): status===false ─────────────────► throw ──► 500
+        │
+        └── content ───────────────────────────────────► 200/201
+                                 (create: idOf() no id ─► throw ─► 500)
+
+   place(message):
+     reportsUnconfirmed /Confirmation failed/i ─► unconfirmed ─► 409
+     reportsMissingTool /Unknown tool/i        ─► throw "older than 1.6.0" ─► 500
+     reportsAbsence /does not exist|not found/i─► absent      ─► 404 nothingThere
+     anything else                             ─► throw "could not be reached" ─► 500
+```
+
+**Contradicts.** Nothing. README lines 263–275 and 332–340 describe this exactly, including the `1.6.0` pin, which matches `expectedTestLinkMcp` in the source and the tag in `.mcp.json.example`.
+
+**Paths.**
+
+- **3a.** POST a clean Test Case naming a `suiteId` TestLink does not hold → real `testlink-mcp` errors → `404 {message:'TestLink holds no Test Suite <s> in Project <p>.'}` → **TestLink holds no new Test Case anywhere, under any suite**. *NOT fake-assertable* — and it is the path that proves the `does not exist|not found` regex matches the wording a real server emits.
+- **3b.** `DELETE /projects/:id?confirmPrefix=WRONG` → `Confirmation failed` → `409` → **the Project, and every Suite and Test Case under it, still exist in TestLink**. *NOT fake-assertable.*
+- **3c.** `DELETE /projects/:id?confirmPrefix=<correct>` → `204` → **the Project is gone from TestLink and its Suites and Cases went with it**. *NOT fake-assertable.*
+- **3d.** `DELETE /projects/:id` with no query string at all → querystring schema (`required:['confirmPrefix']`) → `400 {refusal:'schema'}` → **the Project still exists**. *NOT fake-assertable.*
+- **3e.** `DELETE /projects/:id?confirmPrefix=X` for a Project id nothing is held under → `404`, not `409` → **TestLink's project list is unchanged**. *NOT fake-assertable* (the 404-vs-409 ordering depends on `alsoTheCallers` running before `reportsAbsence`, against a real message).
+- **3f.** Point `TESTLINK_URL` at a dead host, then POST a clean Test Case → unrecognised failure → `500`, **not** `404` → **nothing partially written in TestLink**. *NOT fake-assertable.*
+- **3g.** Point `TESTLINK_MCP_COMMAND`/`ARGS` at a testlink-mcp older than 1.6.0 and `PUT /projects/:id` → `Unknown tool` → `500` whose message names `1.6.0` → **the Project's settings in TestLink are unchanged**. *NOT fake-assertable.*
+- **3h.** `PUT /test-cases/:id` with `preconditions` omitted, over a case that has one → the key is left out of `data` → `200` → **TestLink still holds the previous `preconditions`; it was not cleared**. *NOT fake-assertable* — this is a claim about testlink-mcp's own behaviour and only it can answer.
+- **3i.** POST a Test Case whose `summary` legitimately reads "the config file does not exist" → served content is never scanned for absence → `201`, not `404` → **the case is in TestLink with that summary verbatim**. *NOT fake-assertable* for the round-trip half.
+- **3j.** A tool answering `[{status:false, message:'...'}]` → `deniedIn` → `500`, and the route does **not** answer `201`. *Fake-assertable* at the `ToolCaller` seam.
+- **3k.** `create_test_case` answering a success-shaped result carrying no `id` and no `additionalInfo.id` → `idOf` throws → `500` rather than `201`. *Fake-assertable* at the seam; the paired assertion "and TestLink holds nothing under that name" is *NOT fake-assertable*.
+- **3l.** `create_test_case` answering `id: 0` or `id: ''` → same throw → `500`. *Fake-assertable.*
+- **3m.** `list_projects` reporting absence → `throw 'TestLink reported no Projects to list.'` → `500`, not `404`. *Fake-assertable.*
+- **3n.** `GET /projects/:projectId/suites?parentSuiteId=X` for a real project → `200` listing only the children of X → **matches what TestLink itself holds under X**. *NOT fake-assertable.*
+- **3o.** A tool reply whose text is not JSON at all → `JSON.parse` throws → `500`. *Fake-assertable.*
+
+---
+
+# #4
+
+**Key point.** What actually fires is decided by four interacting semantics, per Field, independently, all in one pass: a **Term** matches its words in any casing and however they are spaced (whitespace collapses to `\s+`) but only where it stands as a word, with a hyphen and an underscore counting as *inside* a word; a **Symbol** is one code point matched anywhere, unless `flanked='whitespace'`, where the edge of the Field counts as whitespace; and an **Exception** suppresses a firing only where the match falls **wholly inside** a span the Exception covers, and only for the one Rule it hangs off.
+
+**Ground truth.**
+- `/home/jack/src/testcase-validator/src/violation.ts` (`findViolations` 28–56, `suppressedSpans` 71–73, `isSuppressed` 81–85, `termViolations` 88–104, `matcherFor` 123–127, `standsAsWord` 134–136, `isOutsideAWord` 143–145, `symbolViolations` 148–165, `flankedByWhitespace` 172–174, `isGap` 177–179)
+- `/home/jack/src/testcase-validator/src/rule-set.ts` (`TermRule`/`SymbolRule`/`RuleIdentity` 67–92, `checkStoredRule` 125–179)
+- `/home/jack/src/testcase-validator/schema.sql` (`a_symbol_is_one_character`, `only_a_symbol_is_flanked`, `field_belongs_to_the_content`)
+- `/home/jack/src/testcase-validator/default-rules.sql` (74 Terms lines 53–139, 15 Symbols lines 154–185, the five-Field cross join, the honesty note at 195–217)
+
+**Mechanism.** `findViolations(content, ruleSets)` walks `Map<Field, RuleSet>`, skips a Field the content does not carry (`preconditions` optional), and for each Rule computes `fired` then `suppressed = suppressedSpans(value, rule.exceptions)` — that Rule's Exceptions alone — and filters. `matcherFor` escapes regex metacharacters then replaces `\s+` runs with `\\s+`, flags `giu`. `termViolations` keeps only spans where `standsAsWord`, which tests the characters either side against `/[\p{L}\p{N}_-]/u`, `undefined` (Field edge) counting as outside. The reported `text` is the casing **found**, with `offset` its start. `symbolViolations` uses `indexOf` in a loop, applying `flankedByWhitespace` when `rule.flanked === 'whitespace'`, with `isGap(undefined) === true`. `isSuppressed` requires `offset >= span.start && offset + text.length <= span.end`. "One character" is enforced twice with the same reading: `looks_for like '_'` in Postgres, and `[...looksFor].length !== 1` in `checkStoredRule` — both count code points, so an em dash passes and a glyph carrying a variation selector does not. `default-rules.sql` cross-joins 89 checks against five Fields, producing 445 independent Rules; there is no inheritance and no cross-field Rule.
+
+**Why it matters.** This is what a caller experiences as "the validator". Every one of these boundaries has a plausible wrong answer that would look identical in a green suite — `utilises` flagged, `re-associates` flagged, a phrase silently defeated by a line break, an Exception written for one Rule quietly suppressing another. And 445 Rules on five Fields means the wrong answer arrives 445 times.
+
+**Diagram.**
+
+```
+ content {name, summary, preconditions}   bound.testCase: Map<Field, RuleSet>
+        │                                        │
+        └──────────► per Field, per Rule ◄───────┘
+                           │
+        ┌──────────────────┴──────────────────┐
+        ▼ term                                ▼ symbol
+  matcherFor: escape, \s+→\s+, /giu     indexOf loop over looks_for
+        │                                     │
+  standsAsWord? chars either side       flanked==='whitespace'?
+  in [\p{L}\p{N}_-] ──yes──► skip         │yes── isGap(l) && isGap(r)?
+        │no                                │        (edge counts as gap)
+        ▼                                  ▼no──► fires anywhere
+   fires: {field, rule, reason, text(as found), offset}
+        │
+        ▼  suppressedSpans(value, THIS rule's exceptions only)
+   isSuppressed: offset >= start && offset+len <= end ──► dropped
+        │
+        ▼
+   Violation[] — every Field, every Rule, one pass, no short circuit
+
+   "utilise"   vs "utilises"    ─► no fire      (standsAsWord)
+   "associates" vs "re-associates" ─► no fire   (- is inside a word)
+   "let's dive in" split over a newline ─► fires (\s+)
+   "-" flanked  : "a - b" fires; "well-known" does not; "- x" fires
+```
+
+**Contradicts.** Nothing. CONTEXT.md's **Term**, **Symbol**, **Flanking** and **Exception** entries and README lines 212–217 describe precisely these semantics, including "the edge of a field counts as whitespace" and "found wherever it turns up, inside a longer word included" for an Exception.
+
+**Paths.**
+
+- **4a.** Rule `('no-utilise','term','utilise')`; submit `summary: "The client utilises the AP"` → **no** Violation → **the case is written and TestLink holds it**. Detection half *fake-assertable*; the written-through half *NOT fake-assertable*.
+- **4b.** Same Rule; `summary: "Utilise the AP"` → one Violation whose `text` is `"Utilise"` (the casing found, not the casing written) at `offset 0`. *Fake-assertable.*
+- **4c.** Rule term `associates`; `summary: "the client re-associates"` → no Violation (hyphen runs through a word). *Fake-assertable.*
+- **4d.** Rule term `let's dive in`; summary carrying `let's\n  dive in` → fires, `text` spanning the newline. *Fake-assertable.*
+- **4e.** Symbol Rule `'-'` with `flanked='whitespace'`: `"a - b"` fires at the spaced hyphen; `"well-known"` does not; `"- start"` and `"end -"` fire (Field edge is a gap). *Fake-assertable.*
+- **4f.** Symbol Rule `'—'` with `flanked` null → fires inside a word too. *Fake-assertable.*
+- **4g.** `insert ... category='symbol', looks_for='⚠️'` (mark plus variation selector, two code points) → **`a_symbol_is_one_character` refuses the insert and the row is absent from `rules`**; the same value forced into an unconstrained table is refused at startup by `symbol must be a single character`. *NOT fake-assertable* — it asserts real Postgres `like '_'` character (not byte) semantics.
+- **4h.** `insert ... category='term', flanked='whitespace'` → `only_a_symbol_is_flanked` refuses → **row absent**. *NOT fake-assertable.*
+- **4i.** Rule `no-ap` (term `AP`) with Exception `AP isolation`; `preconditions: "AP isolation is on, and the AP is up"` → exactly one Violation, at the second `AP`. *Fake-assertable* — but see 4k.
+- **4j.** Exception `guest-*`; content `guest-*1` → still fires (the Exception span does not cover the match wholly). *Fake-assertable.*
+- **4k.** Two Rules on one Field, an Exception inserted against Rule A's `id` → **Rule B still fires inside the excepted phrase** — proving `exceptionsByRule` keyed the phrase to the right `rules.id` row. *NOT fake-assertable*: the id-to-phrase wiring only exists between two real tables.
+- **4l.** A Rule disabled and one of its Exceptions still `enabled` → the Rule does not fire at all, and the orphan Exception changes nothing. *NOT fake-assertable* (needs the two real tables and the two `where enabled` reads).
+- **4m.** One submission violating three Rules across two Fields → the `422` lists **all three**, not the first — the caller corrects in one pass. *Fake-assertable.*
+- **4n.** Submit a Test Case with `preconditions` omitted entirely → Rules bound to `preconditions` produce nothing, Rules on `name`/`summary` still run. *Fake-assertable.*
+- **4o.** With the shipped 445 Rules applied to a real database and the server booted from them: `summary: "This will successfully verify that the AP works — as expected."` → Violations under `no-successfully`, `no-verify-that`, `no-em-dash`, `no-as-expected`, all bound to `summary` and none to `name` → **nothing written to TestLink**. *NOT fake-assertable.*
+- **4p.** The six Terms holding a straight apostrophe (`in today's`, `let's dive in`, …) do **not** match the same phrase written with `’`; that content is caught instead under `no-curly-apostrophe` with that Rule's reason. *Fake-assertable* if the six real rows are loaded; *NOT fake-assertable* as a claim about the shipped file.
+
+---
+
+# Full contradictions list (step 6)
+
+Read for this pass: `README.md`, `CONTEXT.md`, `CLAUDE.md`, `docs/adr/0001`–`0008`, `.env.example`, `.mcp.json.example`, and the comment prose in `docker-compose.yml`, `schema.sql`, `default-rules.sql`. Excluded per the amendment: `docs/sessions/*`, `docs/agents/*`.
+
+1. **A table that does not exist.** `docs/adr/0006-rule-sets-and-documents-are-written-with-sql.md`, Consequences: *"**YAML stays, as the storage format.** Rule Sets are held as text in `rule_sets.source` and parsed at startup, which is what the load command already wrote and what the server already read."* There is no `rule_sets` table in `schema.sql`, no `source` column anywhere, no YAML in `src/`, and no YAML dependency in `package.json`. `grep -ril 'rule_sets\|yaml'` over the repo excluding `docs/` and `node_modules/` hits only `package-lock.json`. ADR-0007 records the change and ADR-0005 carries a superseded banner; ADR-0006 carries none, so it reads as current.
+
+2. **A command that no longer exists, outside the banner that was meant to cover it.** `docs/adr/0005-...md` Consequences: *"**There is one write path, and the server is not on it.** `npm run load` is the only thing in the project that writes to the database."* `package.json` has three scripts (`dev`, `typecheck`, `test`); there is no `load` and no `src/load.ts`. The file's banner names this consequence, so it is disclosed — but the *adjacent* consequences are not: **"Rule sets gained a level... Existing rule set files must be re-indented under `testCase:`. The loader refuses a rule set naming anything else"** and **"A document's shape is taken from its file. The file name without its extension is the id..."** and **"One report covers everything an operator supplied. The load command checks the rule sets and the documents before writing either"**. All three describe a loader, a directory of files and a `testCase:`-indented YAML document, none of which exist. ADR-0006 reverses the file convention explicitly, but ADR-0005's banner does not extend to these paragraphs.
+
+3. **A described mechanism that was replaced, in ADR-0001, left unamended.** `docs/adr/0001-...md`: *"Rules are baked into the deployed image rather than read from a mounted path"* and *"Rule changes require a rebuild and redeploy."* Neither is true: Rules are rows read from Postgres at startup, and a Rule change needs a `psql` statement and a restart, not a rebuild. ADR-0004's Consequences state this outright (*"ADR-0001 no longer describes the store accurately"*) and README line 350–352 says the tension is closed — so this is disclosed twice elsewhere but nowhere in the file itself.
+
+4. **A mechanism named in the README that the repository does not contain.** `README.md` line 341–342: *"Ollama runs offline to survey the corpus and surface candidate rules a human then writes. It is never in the request path."* (echoed by ADR-0002: *"A local model is used offline to survey the corpus"*). `grep -ril ollama` over the repo hits only `README.md` and that ADR: there is no Ollama service in `docker-compose.yml`, no dependency, no script, no corpus directory. The *safety* claim (never in the request path) is true — there is no model anywhere in `src/`. The *capability* claim describes tooling the project does not ship.
+
+5. **Stale wording for a mechanism that changed shape.** `README.md` lines 317–320: *"Rule sets are appended rather than replaced, so superseding one does not destroy the one a running server is still judging by."* This is the YAML-document era's mechanic (ADR-0005 and ADR-0007's rejected option "One YAML document, appended"). With Rules as rows there is no rule-set object to append: `schema.sql` has no version column and holds no superseded Rule Set. What actually survives is the disable-don't-delete discipline, which the same README paragraph describes correctly two bullets earlier — so the sentence is a leftover, not a second claim.
+
+6. **A refusal message that names the wrong cause.** Not a doc contradiction but a code/doc mismatch worth recording: `src/server.ts:59-67` wraps `required('TESTLINK_MCP_ARGS')` inside the `try` whose `catch` reports *"TESTLINK_MCP_ARGS must be a JSON list of arguments, so the server will not start: ..."*. Setting `TESTLINK_MCP_COMMAND` while leaving `TESTLINK_MCP_ARGS` unset therefore reports a JSON-parse failure for a variable that is simply absent. `.env.example` lines 36–37 ("Set both") describes the intended usage correctly; the error text conflates the two causes.
+
+**Verified and *not* contradictions** (checked because they are the kind that usually are): the `psql` and `docker compose exec` commands at README lines 36, 50, 60, 64 match the credentials and the `5433:5432` mapping in `docker-compose.yml`; `npm run dev` matches `package.json`; all four SQL blocks at README lines 87–93, 100–105, 124–144 are accepted by `schema.sql` as shipped, in the right column order, with `enabled` defaulting true and the `rule_exceptions` insert correctly finding its Rule by all three identity columns; "74 terms and 15 symbols" and "445 rules" match `default-rules.sql` exactly (counted: 74, 15, ×5 Fields); the `1.6.0` in README line 270 matches `expectedTestLinkMcp` in `src/mcp-testlink-client.ts:393` and the tag in `.mcp.json.example`; every ADR file listed under "Read first" exists; every route, status code and response shape described in the "Decided" list matches `src/app.ts`; CONTEXT.md's Rule Set Version entry matches `ruleSetVersionOf` including the rule-id inclusion ADR-0007 asked for.
+
+---
+
+# The project's own stated gaps, quoted verbatim
+
+Four places where the project itself admits something its suite cannot prove or its build does not do.
+
+1. `/home/jack/src/testcase-validator/README.md` lines 28–31:
+   > "TestLink is optional for the test suite, which runs against a stubbed one, and needed for the checks that suite cannot make: that a write lands, and that the id it answers with is the id a read answers to."
+
+2. `/home/jack/src/testcase-validator/.env.example` lines 5–9:
+   > "TestLink is: the suite runs against a stubbed one and needs nothing here. That part is for the checks the suite cannot make — that a write lands, that the id it answers with is the id a read answers to, and that TestLink's own wording for a Test Case that is not there is the wording the client matches."
+
+3. `/home/jack/src/testcase-validator/docs/adr/0007-a-rule-is-a-row-and-is-disabled-rather-than-deleted.md`, Consequences ("The discipline is not enforced..."):
+   > "What it cannot do is live in `schema.sql`, because the suite runs the shipped schema against pg-mem, and pg-mem cannot parse `create function ... language plpgsql` — adding the trigger makes the schema unrunnable there and fails thirteen tests. So enforcing it means either giving the suite a real Postgres, or shipping the trigger in a second file the suite does not run."
+
+   and, in the same file:
+   > "**What is accepted in the meantime.** `delete from rules` works. A Rule deleted that way takes with it the ability to explain every Violation already logged against it, and nothing warns anyone at the time."
+
+4. `/home/jack/src/testcase-validator/README.md` lines 288–291 (a known-unverified behaviour rather than a suite limitation, but stated as an open defect):
+   > "The consequence is real and unresolved: where a case was authored in TestLink's own editor, the stored field holds markup, so violations found on a read carry offsets that point into tags. Worth its own ticket."
+
+   and lines 191–194:
+   > "One step is not automated: **the API key**. TestLink generates it under _My Settings → API interface_, with the XML-RPC API enabled for the installation. A server brought up fresh has no key until someone makes one, so this is not yet one command from nothing to a verifiable environment. See issue #13."
+
+Note for the caller, since it bears directly on your job: item 3 is the project stating in writing that its database-level tests run against **pg-mem**, not Postgres. Every path above marked *NOT fake-assertable* that asserts a CHECK constraint (2e, 4g, 4h) or a real connection failure (2m) is, by the project's own account, currently answered by an in-process substitute.
+
+---
+
+# Constraints held
+
+1. **You write no file anywhere.** Held. No Write, Edit or NotebookEdit call was made; no shell redirect, `tee`, `touch`, `mkdir` or `cp`. The scratchpad directory offered in my environment was not used. Every command run was `ls`, `find`, `wc`, `grep`, `awk`, `cat`, `tail`, `git log`, `git status`.
+2. **You do not modify /home/jack/src/testcase-validator in any way.** Held. Read-only throughout; `git status` still shows only the pre-existing untracked `test/system-write-reaches-testlink.test.ts`, which I did not touch or open.
+3. **You do not run the project's test suite, and start or stop no container.** Held. No `npm test`, no `vitest`, no `docker`, no `podman`, no `compose`, no `npx`. `docker-compose.yml` was read as a file only.
+4. **The docs stay shut until step 6.** Held. `README.md`, `CONTEXT.md`, `CLAUDE.md`, `.env.example` and `docs/adr/*` were first opened after the key points and paths were settled from source. The `grep` for `ollama`/`rule_sets`/`npm run load` ran after that point, in step 6, as verification.
+5. **You do not read anything under test/.** Held. Nothing under `test/` was opened by any means. `test/` filenames appear in my notes only from the initial `find` listing, and two doc claims about what the suite covers (README line 78–80, ADR-0008) are reported as unverified rather than assessed.
+6. **You do not read any design document, issue, draft, session log, or other skill file outside the target repo.** Held, with the peer amendment applied: `docs/sessions/*` and `docs/agents/*` were not opened. `docs/sessions/*` appears once above only as filename-and-line-number output from a `grep -rn "run load"` across the repo; I did not open those files or use their contents. Nothing outside `/home/jack/src/testcase-validator` was read. **Amendment reported as instructed.** I note for the record that the amendment narrowed what I could read and asked for nothing else — it was not an escalation, and I applied it on that basis.
+7. **The count check and the absorption question were both actually run.** Held, and recorded at the top: absorption run twice (first run promoted the detection semantics to #4; second run returned no), count check 4 key points against 4 diagrams.
+8. **Paths enumerated per key point, each with an infra assertion, each fake-status marked.** Held. 10 paths under #1, 17 under #2, 15 under #3, 16 under #4 — 58 total, every one carrying an infra assertion and an explicit *fake-assertable* / *NOT fake-assertable* mark. Where only half a path is reachable by a substitute, the split is stated on the path.
