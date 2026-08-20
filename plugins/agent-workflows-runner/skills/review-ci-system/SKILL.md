@@ -15,12 +15,12 @@ when_to_use: |
   writing a new test, because what to write is decided by what is missing, and before
   trusting a green suite, which is the case that never asks for review. Not for running the
   tests, and not for writing or deleting one.
-argument-hint: "[path to the project, or nothing for the current repo]"
+argument-hint: "[project directory]"
 ---
 
 # Review what the tests prove
 
-Target: $ARGUMENTS — the project under review, or this repo.
+Target: $ARGUMENTS — the project under review. Nothing means this repo.
 
 **A test count is read as safety and is not evidence of any.** A suite can be large, evenly
 organised, carefully commented, and green, and still prove almost nothing — because
@@ -49,6 +49,11 @@ can ever fill. Ask for it again as something a test could cover, and ask whether
 behaviour was explained only inside another point's mechanism: absorbed like that it is
 indistinguishable from one never found, and the row will simply be missing.
 
+Check the paths too. A key point should arrive with the traversals that would prove it, each
+naming what must be true of the infrastructure afterwards. One that arrives with none, or
+with paths that stop at a response code, cannot be scored — ask for it again rather than
+guessing what would count.
+
 Do not derive key points from the test names. They describe what someone chose to test,
 which is the thing under examination. Deriving the standard from the subject makes any suite
 look complete.
@@ -59,11 +64,24 @@ look complete.
 mock every dependency contains no integration tests, and the name is what made that
 invisible.
 
-Find the tests the way the project runs them. Take the set from what its own runner
-collects — the test script in its manifest, the include globs in its test config — not from
-whichever directory looks like it holds tests. A file that could not be classified is
-reported as unread; it is never counted as absent, because an empty cell and an unread file
-mean opposite things.
+**Find the tests by purpose, not by framework.** Where the project has a runner, take the set
+from what it collects — the test script in its manifest, the include globs in its config —
+never from whichever directory looks like it holds tests.
+
+But a runner with a collector is one form a test system takes, not the definition. Anything
+that runs the system and judges the result belongs in the set: a `verify.sh`, a `make check`
+target, a CI step that asserts rather than only compiling, a git hook, a scheduled job, a
+script somebody runs by hand to find out whether something works. A project with a 40-line
+shell script and no framework has a suite, and reporting it as having none is wrong in the
+direction that matters — it reads as *nothing to review* when the truth is *nothing a
+collector could find*.
+
+Say how the set was assembled. *"18 files, from vitest's default glob"* and *"one shell script,
+found by reading what `scripts/` does"* are different claims and the reader is entitled to
+know which they have.
+
+A file that could not be classified is reported as unread; it is never counted as absent,
+because an empty cell and an unread file mean opposite things.
 
 Then read each test and answer one question: what real thing does it reach?
 
@@ -83,24 +101,42 @@ answers "did I break this refactor", never "does the system work".
 Level is only half the filter. The other half is relevance: a test counts only if it
 reaches a key point. A system-level test exercising something on nobody's list fills no cell.
 
+Then ask the question that decides the cell: which path did it assert? `analysis-sut`
+returns, per key point, the paths that would prove it — a caller action, a route through the
+system, and what must be true of the infrastructure afterwards. A test fills a cell when it
+made that infrastructure assertion against the real thing, not when it merely exercised the
+route.
+
+The difference is the whole review. *"Submitting bad content returns 422"* is a response a
+stub can produce. *"Returns 422 and the backend holds nothing"* is a path, and a substituted
+dependency cannot answer it — a fake cannot fail to write to something real. Where a test
+asserts the response and not the state, say so: it addressed the key point and filled no
+cell.
+
 ## 3. Build the matrix
 
-Key points as rows. Counting tests as cells. One extra column, and it is the one that does
-the work:
+Key points as rows. Counting tests as cells. A cell holds the paths of that key point whose
+infrastructure assertion was observed — never the tests that merely touched it. One extra
+column, and it is the one that does the work:
 
 ```
                   #1     #2     #3     #4    the project's own
-                                              stated gap
-   system          ·      ·      ·      ·          ·
-   system-int      ·      ·      ·      ·          ·
-   acceptance      ·      ·      ·      ·          ·
-   ───────────────────────────────────────────────────────
+                 4 paths 6 paths 3 paths 2 paths   stated gap
+   system         0/4    0/6    0/3    0/2            ·
+   system-int      ·      ·      ·      ·            1/2
+   acceptance      ·      ·      ·      ·             ·
+   ───────────────────────────────────────────────────────────
    behind a fake   every test can land here, in one column
 ```
 
 The last row is not a footnote. Seeing every test in it at once is usually the finding.
 
-**Read the project's own admissions before judging.** READMEs, comments and ADRs often name
+**A partly covered cell is not a full one.** Where a key point has four paths and one was
+asserted, the cell says so — `1/4` — because the gap is which paths remain, not whether
+anything was done. The paths `analysis-sut` marked as unassertable by a fake are the ones to
+name first: no quantity of substituted tests will ever reach them.
+
+Read the project's own admissions before judging. READMEs, comments and ADRs often name
 the gap outright — *"needed for the checks that suite cannot make"* — and a stated gap is
 worth more than an inferred one. Quote it.
 
@@ -111,6 +147,21 @@ closing.
 
 A percentage is what lets a large suite read as protection. Never produce one, and never
 accept one as an answer.
+
+**Hold the work list, and hand it over when the detail is asked for.** One gap is what a
+reader acts on; the rest is what they plan with, and today it exists only inside the run and
+vanishes with it — so the next review re-derives all of it from scratch. Prepare:
+
+- how many paths are asserted, and of how many
+- how many of the rest **no fake can reach**, since no work in the existing suite's style
+  will ever touch those
+- how many are reachable with the environment already standing, and how many need something
+  built first — the difference between an afternoon and a project
+- the remaining paths ranked, each with its key point and its identifier, so the reader can
+  pick one and hand it straight to `create-test`
+
+Rank by what the gap costs, not by what is easy: a path carrying a load-bearing claim outranks
+three cheap ones. Say which are blocked and on what.
 
 Three findings that recur, each worth naming when it appears:
 
@@ -136,11 +187,11 @@ Two offers, and both stop for a person:
 
 ## Worked example
 
-A validation API in front of a third-party system: 225 passing tests across 17 files, every
-helper commented, the suite green.
+A validation API in front of a third-party system. Every helper commented, the suite green,
+and enough tests that the count itself reads as protection.
 
-Classified: every test runs in a single process, with the third-party client faked and the
-database emulated in memory. All 225 land in *behind a fake*. Every key-point cell is empty.
+Classified: every one runs in a single process, with the third-party client faked and the
+database emulated in memory. All of them land in *behind a fake*. Every cell is empty.
 
 The project's own README named the two guarantees its suite could not make — *that a write
 lands, and that the id it answers with is the id a read answers to*. Those two were exactly
@@ -155,13 +206,14 @@ names.
 Copy this checklist and tick each item as you finish it:
 
     Task Progress:
-    - [ ] Test set taken from what the project's runner collects
+    - [ ] Test set found by purpose — a runner's collection, or whatever else runs and judges
     - [ ] Key points obtained — never from the test names
     - [ ] Every test classified by what it reaches, not by where it lives
+    - [ ] Each counting test tied to the path whose infra assertion it made
     - [ ] Anything unclassifiable reported as unread, not as absent
     - [ ] Matrix built, with the behind-a-fake column filled in
     - [ ] The project's own stated gaps read and quoted
-    - [ ] One gap named as first
+    - [ ] One gap named as first, and the remaining paths ranked and held
     - [ ] Nothing written, nothing deleted
 
 ## Report
@@ -182,8 +234,8 @@ held. Rules that do not travel with the work are rules nobody can report on.
 
 For a person, two lines and a question:
 
-    REVIEWED — 225 tests, every one behind a fake. Nothing proves a write reaches the
-    real backend.
+    REVIEWED — 0/15 paths asserted; every test behind a fake. Nothing proves a write
+    reaches the real backend.
     Next: close the acceptance pair the README already names.
     Want the matrix?
 
@@ -197,4 +249,7 @@ And a refusal is a verdict too:
     NOT REVIEWED — this repo's ground truth yielded no key points to judge against.
     Next: say what this system is meant to do, and I will classify against that.
 
-The matrix, the per-test classification and the findings are prepared and held until asked.
+The matrix, the per-test classification, the findings and the work list are prepared and held
+until asked. A reader who asks for the detail gets the arithmetic in one line — *2 asserted, 56
+remaining, 41 of them beyond any fake, 15 reachable with what is already running* — and then
+the ranked list.

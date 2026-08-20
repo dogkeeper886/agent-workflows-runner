@@ -47,6 +47,11 @@ So each candidate needs a named system-level or higher test that covers the same
 If nothing above covers it, the component test is the only cover there is — it stays,
 whatever else is true about it.
 
+**Cover means a case that passes, not a case that exists.** A path whose test is written and
+red has established that the system does not hold it — that is a watched failure, not cover,
+and pruning beneath it would remove the only tests still passing on that behaviour. Where the
+cover above is red, the candidate stays and the report says why.
+
 ## 2. What makes a candidate
 
 | Candidate | Not a candidate |
@@ -84,19 +89,42 @@ to any file — every edit it makes is a removal, which is what makes it safe to
 Copy this checklist and tick each item as you finish it:
 
     Task Progress:
-    - [ ] Coverage above established per candidate, by name
+    - [ ] Coverage above established per candidate, by name, and green rather than red
     - [ ] Candidates that cover something nothing else covers excluded
     - [ ] Failing tests excluded — they are findings
     - [ ] Untraceable tests left alone
     - [ ] List shown with its replacements, and the cost stated
     - [ ] Asked once, for the whole list
     - [ ] Only the confirmed files deleted; nothing written
+    - [ ] Matrix printed unchanged, or its absence stated with the offer to build one
 
 ## Report
 
-Two lines and a question:
+**Show the matrix after removing, above the two lines.** Everything this unit removes was
+already outside it — component tests never occupied a cell — so the matrix comes out
+unchanged, and that is the point. A reader who has just watched nine tests disappear wants to
+know what it cost them; an unchanged matrix answers that by showing rather than asserting.
 
-    PRUNED — 9 component tests removed, each covered by a named system test.
+Print the one you worked from, with the removals noted beneath it:
+
+```
+                     #1     #2     #3     #4
+   system             1      ·      1      ·
+   system-int         ·      1      ·      ·
+   acceptance         ·      ·      ·      ·
+   ──────────────────────────────────────────
+   removed            9 component tests — no cell above was touched
+```
+
+Where you were handed a matrix by `review-ci-system`, that is the one to print. Where you
+came in by your own door and derived cover per candidate instead, you have no matrix to
+print: say so, and offer to run `review-ci-system` rather than assembling one here. Building
+a matrix means re-deriving the key points and reclassifying every test, which is that unit's
+job and not a side effect of a deletion.
+
+Then two lines and a question:
+
+    PRUNED — 9 component tests removed, each covered by a named system test above it.
     Next: run the suite once to confirm nothing else depended on them.
     Want the list?
 

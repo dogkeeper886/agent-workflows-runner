@@ -2,10 +2,12 @@
 name: analysis-sut
 description: |
   Works out what a system must do, from its code rather than its documentation, and returns
-  it as a short ranked list of key points — each with the paths it was derived from, the
-  mechanism in the code's own names, and a diagram. Reads the existing docs only to report
-  where they contradict the code. Saves nothing: the study is reproduced when needed rather
-  than stored, because a stored one goes stale silently and is believed anyway.
+  it as a short ranked list of key points — each with the files it was derived from, the
+  mechanism in the code's own names, a diagram, and the paths that would prove it: a caller
+  action, a route through the system, and what must be true of the infrastructure afterwards.
+  Reads the existing docs only to report where they contradict the code. Saves nothing: the
+  study is reproduced when needed rather than stored, because a stored one goes stale
+  silently and is believed anyway.
 when_to_use: |
   Use when the question is what a system does or what about it is worth testing — "what
   should we test here", "where do I start with tests", "what's worth testing", "what does
@@ -14,13 +16,13 @@ when_to_use: |
   coverage is decided by what must be tested, and reach for it on an unfamiliar repo before
   trusting anything its README says. Also called by review-ci-system, which cannot classify
   a suite without it. Not for finding one file or one function — that is a search.
-argument-hint: "[path] [focus]"
+argument-hint: "[project directory] [focus]"
 ---
 
 # What must be tested
 
-Target: $ARGUMENTS — a path and an optional focus. No path means this repo; no focus means
-the whole system.
+Target: $ARGUMENTS — a directory and an optional focus. No directory means this repo; no
+focus means the whole system.
 
 **A system's documentation is a claim about it, not a description of it.** Docs are written
 once and the code moves; nothing announces the divergence, so the stale sentence is read as
@@ -32,17 +34,18 @@ where they disagree.
 
 ## What this returns
 
-A ranked list, about three key points, each carrying seven things:
+A ranked list, about three key points, each carrying eight things:
 
 | Field | What goes in it |
 |---|---|
 | **#** | Rank. #1 is the organizing idea |
 | **Key point** | One line, concrete |
-| **Ground truth** | The paths it was derived from — makes the claim checkable |
+| **Ground truth** | The files it was derived from — makes the claim checkable |
 | **Mechanism** | What actually happens, in the code's own names: real functions, routes, tables, types |
 | **Why it matters** | What a newcomer cannot understand without it |
 | **Diagram** | ASCII, one per key point |
 | **Contradicts** | Any doc claim the code does not support, or "none" |
+| **Paths** | The traversals that would prove it — see step 5 |
 
 **Mechanism is where a study earns its keep.** *"A service talks to a database"* is not a
 finding. *"`store.rules()` is called once at startup and zero rows throws, so the server does
@@ -112,7 +115,35 @@ draw the rest or shorten the list.
 Keep a diagram inside 80 columns. It is read in a terminal, and one that wraps is one nobody
 reads.
 
-## 5. Then read the docs, and only to contradict
+## 5. Enumerate the paths
+
+A key point says what the system must do. A **path** says how anyone would find out, and it
+is what makes a key point checkable rather than merely stated. Three parts:
+
+    caller action  ──►  route through the box  ──►  infra assertion
+
+Derive them from the routes and refusal shapes already read in step 1. This is not a second
+study.
+
+**A path with no infra assertion is not a path.** *"Submitting bad content returns 422"* is a
+response; *"submitting bad content returns 422 and the backend holds nothing"* is a path. The
+second half is the part a substituted dependency cannot answer — a fake cannot fail to write
+to something real — which is exactly why it belongs here rather than being left to whoever
+writes the test.
+
+Take every route a caller can reach and every way the box can answer it: the request refused
+before anything runs, the content refused with nothing written, the target absent, the
+outcome unconfirmed, the dependency unreachable, and the call succeeding. Each pairing that
+can actually occur is one path, and each names what must be true of the infrastructure
+afterwards — a row created, a row untouched, a row gone.
+
+Mark the paths a fake cannot assert. Those are the ones a substituted suite structurally
+cannot reach, however many tests it has, and they are where coverage is really decided.
+
+Keep them under the key point they prove. A flat list of every path in a system is an index,
+and step 3's argument against those applies unchanged.
+
+## 6. Then read the docs, and only to contradict
 
 With the model already derived, read the prose files — README, architecture records, example
 config, anything under a docs directory. Report every claim the code does not support: a
@@ -122,14 +153,14 @@ mechanism that was replaced.
 *Docs* here means those files. Comments inside source are read in step 1 along with the code
 they sit in; deferring them would mean reading the same file twice.
 
-This pass belongs to whoever read the code, which under step 6 is the subagent. Handing it
+This pass belongs to whoever read the code, which under step 7 is the subagent. Handing it
 back to the caller means the caller reads the docs and the code both, and the delegation
 bought nothing.
 
 This costs almost nothing once the code has been read, and it is often the most valuable
 thing returned — the contradictions are invisible to everyone who trusts the document.
 
-## 6. Study in the background
+## 7. Study in the background
 
 Spawn one subagent for the reading and take back its whole result.
 
@@ -143,16 +174,16 @@ anything is enumerated, and parallel studies each find a different #1.
 else is not bound by the rules those steps exist to serve — it may write a scratch file, or
 open the docs first, and the reply will say neither. Pass, explicitly:
 
-- the target path, absolute, and the focus if one was supplied
-- steps 1 to 5, in order
-- **it writes no file anywhere** (step 7), and must say so in its result
-- the docs stay shut until step 5
-- the count check, and the absorption question beside it
+- the target directory, absolute, and the focus if one was supplied
+- steps 1 to 6, in order
+- **it writes no file anywhere** (step 8), and must say so in its result
+- the docs stay shut until step 6
+- the count check, the absorption question beside it, and the paths per key point
 
 Then require the result to state which of those it held. A rule nobody was asked about is a
 rule nobody can report on.
 
-## 7. It writes no file
+## 8. It writes no file
 
 Not in the repo, not in a scratch directory, not a cache. The list is returned in the reply
 and lives in the session.
@@ -170,12 +201,14 @@ copy this rule forbids.
 Copy this checklist and tick each item as you finish it:
 
     Task Progress:
-    - [ ] Ground truth read first; docs untouched until step 5
+    - [ ] Ground truth read first; docs untouched until step 6
     - [ ] #1 identified before any feature was listed
     - [ ] List ranked, four key points at most
     - [ ] No behaviour explained only inside another key point's mechanism
     - [ ] One ASCII diagram per key point — count matches, each inside 80 columns
     - [ ] Mechanism written in the code's own names, not generic ones
+    - [ ] Paths enumerated per key point, each with an infra assertion
+    - [ ] Paths a fake cannot assert marked
     - [ ] Contradictions reported, or "none found"
     - [ ] Constraints handed to the subagent, and it reported which it held
     - [ ] No file written anywhere
@@ -192,7 +225,7 @@ payload held back from it is a payload lost:
 
 For a person, two lines and a question:
 
-    STUDIED — 4 key points, #1 the validation gate on the only path out.
+    STUDIED — 4 key points, #1 the validation gate on the only route out.
     11 places the docs contradict the code.
     Next: review what the tests prove against these.
     Want the list?
